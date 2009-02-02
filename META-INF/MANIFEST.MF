@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Ontology Completion library
+Bundle-SymbolicName: de.tudresden.inf.tcs.oclib;singleton:=true
+Bundle-ContactAddress: sertkaya@tcs.inf.tu-dresden.de
+Bundle-DocURL: http://lat.inf.tu-dresden.de/systems/ocp
+Bundle-Description: A library for ontology completion
+Bundle-Vendor: Baris Sertkaya
+Import-Package: org.apache.log4j
+Bundle-Version: 1.0
+Bundle-ClassPath: .,
+ lib/fcalib.jar,
+ lib/owlapi-bin.jar
+Require-Bundle: de.tudresden.inf.tcs.fcalib;bundle-version="1.0.0"
