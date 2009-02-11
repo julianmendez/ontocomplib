@@ -8,8 +8,8 @@ import org.semanticweb.owl.model.OWLDataFactory;
 import org.semanticweb.owl.model.OWLClass;
 import org.semanticweb.owl.model.OWLDescription;
 import org.semanticweb.owl.model.OWLIndividual;
-import org.semanticweb.owl.inference.OWLReasoner;
-import org.semanticweb.owl.inference.OWLReasonerException;
+// import org.semanticweb.owl.inference.OWLReasoner;
+// import org.semanticweb.owl.inference.OWLReasonerException;
 
 import org.apache.log4j.Logger;
 
@@ -36,7 +36,7 @@ import de.tudresden.inf.tcs.fcaapi.FCAImplication;
  */
 
 
-public class CounterExampleCandidates extends ArrayList<OWLIndividual> {
+public class CounterExampleCandidates extends ArrayList<IndividualObject> {
 
 	private static final long serialVersionUID = 1L;
 	/**
@@ -45,15 +45,17 @@ public class CounterExampleCandidates extends ArrayList<OWLIndividual> {
 	private static final Logger logger = Logger.getLogger(CounterExampleCandidates.class);
 	
 	
-	private OWLReasoner reasoner;
+	// private OWLReasoner reasoner;
 	private OWLDataFactory factory;
-	private OWLDescription counterExampleDescription;
+	// private OWLDescription counterExampleDescription;
 	private FCAImplication<OWLClass> question;
+	private IndividualContext context;
 	
 	// public CounterExampleCandidates(FCAImplication<OWLClass> question, OWLReasoner r, OWLDataFactory f) {
-	public CounterExampleCandidates(IndividualContext context) {
-		reasoner = context.getReasoner();
-		factory = context.getFactory();
+	public CounterExampleCandidates(IndividualContext c) {
+		context = c;
+		// reasoner = getContext().getReasoner();
+		factory = getContext().getFactory();
 		// OWLDescription desc1 = factory.getOWLObjectIntersectionOf(question.getConclusion());
 		// Set<OWLDescription> tmp = new HashSet<OWLDescription>();
 		// tmp.add(desc1);
@@ -75,6 +77,10 @@ public class CounterExampleCandidates extends ArrayList<OWLIndividual> {
 		// logger.debug("Number of counterexample candidates: " + size());
 	}
 	
+	public IndividualContext getContext() {
+		return context;
+	}
+	
 	public void setQuestion(FCAImplication<OWLClass> q) {
 		question = q;
 		OWLDescription desc1 = factory.getOWLObjectIntersectionOf(question.getConclusion());
@@ -83,30 +89,99 @@ public class CounterExampleCandidates extends ArrayList<OWLIndividual> {
 		for (OWLClass cls : question.getPremise()) {
 			tmp.add(factory.getOWLObjectComplementOf(cls));
 		}
-		counterExampleDescription = factory.getOWLObjectUnionOf(tmp);
+		// counterExampleDescription = factory.getOWLObjectUnionOf(tmp);
 	}
 	
 	public FCAImplication<OWLClass> getQuestion() {
 		return question;
 	}
 	
-	public void update() {
-		clear();
-		try {
-			for (OWLIndividual individual : reasoner.getIndividuals(factory.getOWLThing(), false)) {
-				if (!reasoner.hasType(individual, counterExampleDescription,false)) {
-					add(individual);
-				}
+	// public void update() {
+	// 	for (IndividualObject ind : this) {
+	// 		if (ind.getDescription().getAttributes().containsAll(getQuestion().getConclusion())) {
+	// 			// then ind is not a counterexample candidate
+	// 			remove(ind);
+	// 		}
+	// 		else {
+	// 			boolean removed = false;
+	// 			for (OWLClass attr : getQuestion().getPremise()) {
+	// 				if (ind.getDescription().getNegatedAttributes().contains(attr)) {
+	// 					remove(ind);
+	// 					removed = true;
+	// 					break;
+	// 				}
+	// 			}
+	// 			if (!removed) {
+	// 				ind.updateDescription();
+	// 			}
+	// 		}
+	// 	}
+	// 	try {
+	// 		for (OWLIndividual individual : reasoner.getIndividuals(factory.getOWLThing(), false)) {
+	// 			if (!reasoner.hasType(individual, counterExampleDescription,false)) {
+	// 				if (!containsOWLIndividual(individual)) {
+	// 					IndividualObject obj = new IndividualObject(individual,getContext());
+	// 					obj.updateDescription();
+	// 					add(obj);
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	catch (OWLReasonerException e) {
+	// 		e.printStackTrace();
+	// 		System.exit(-1);
+	// 	}
+	// 	logger.debug("Number of counterexample candidates: " + size());
+	// }
+	
+	public boolean containsOWLIndividual(OWLIndividual ind) {
+		for (IndividualObject obj : this) {
+			if (obj.getIdentifier().equals(ind)) {
+				return true;
 			}
 		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		logger.debug("Number of counterexample candidates: " + size());
+		return false;
 	}
 	
-	public OWLIndividual getCandidateAtIndex(int index) {
+	// public void updateObjectDescriptions() {
+	// 	for (IndividualObject obj : this) {
+	// 		obj.updateDescription();
+	// 	}
+	// }
+	
+	public void update() {
+		clear();
+		search:
+			for (IndividualObject indObj : getContext().getObjects()) {
+				if (indObj.getDescription().getAttributes().containsAll(getQuestion().getConclusion())) {
+					continue search;
+				}
+				for (OWLClass attr : getQuestion().getPremise()) {
+					if (indObj.getDescription().getNegatedAttributes().contains(attr)) {
+						continue search;
+					}
+				}
+				add(indObj);
+			}
+		logger.debug("Number of counterexample candidates: " + size());
+	}
+	// public void update() {
+	// 	clear();
+	// 	try {
+	// 		for (OWLIndividual individual : reasoner.getIndividuals(factory.getOWLThing(), false)) {
+	// 			if (!reasoner.hasType(individual, counterExampleDescription,false)) {
+	// 				add(individual);
+	// 			}
+	// 		}
+	// 	}
+	// 	catch (OWLReasonerException e) {
+	// 		e.printStackTrace();
+	// 		System.exit(-1);
+	// 	}
+	// 	logger.debug("Number of counterexample candidates: " + size());
+	// }
+	
+	public IndividualObject getCandidateAtIndex(int index) {
 		return get(index);
 	}
 	

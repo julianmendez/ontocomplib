@@ -4,8 +4,8 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 
-import org.semanticweb.owl.model.OWLClass;
-import org.semanticweb.owl.model.OWLIndividual;
+// import org.semanticweb.owl.model.OWLClass;
+// import org.semanticweb.owl.model.OWLIndividual;
 
 import de.tudresden.inf.tcs.fcaapi.action.ExpertAction;
 import de.tudresden.inf.tcs.oclib.IndividualContext;
@@ -38,8 +38,7 @@ import de.tudresden.inf.tcs.oclib.IndividualContext;
  * sertkaya@tcs.inf.tu-dresden.de
  */
 
-public abstract class AbstractExpertAction extends AbstractAction implements 
-	ExpertAction<OWLClass,OWLIndividual> {
+public abstract class AbstractExpertAction extends AbstractAction implements ExpertAction {
 
 	private static final long serialVersionUID = 1L;
 

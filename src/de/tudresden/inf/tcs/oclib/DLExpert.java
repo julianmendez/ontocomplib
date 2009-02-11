@@ -27,7 +27,7 @@ import de.tudresden.inf.tcs.fcaapi.FCAImplication;
  */
 
 
-public interface DLExpert extends Expert<OWLClass,OWLIndividual> {
+public interface DLExpert extends Expert<OWLClass,OWLIndividual,IndividualObject> {
 
 	/**
 	 * Requests a counterexample from the expert. Called in the case where accepting an implication

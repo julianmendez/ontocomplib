@@ -19,14 +19,14 @@ import org.semanticweb.owl.model.OWLOntologyChangeException;
 import org.semanticweb.owl.model.OWLIndividual;
 import org.semanticweb.owl.inference.OWLReasonerException;
 import org.semanticweb.owl.inference.OWLReasoner;
-import org.semanticweb.owl.inference.OWLReasonerAdapter;
+// import org.semanticweb.owl.inference.OWLReasonerAdapter;
 
-import de.tudresden.inf.tcs.fcalib.utils.ListSet;
-import de.tudresden.inf.tcs.fcaapi.utils.IndexedSet;
+// import de.tudresden.inf.tcs.fcalib.utils.ListSet;
+// import de.tudresden.inf.tcs.fcaapi.utils.IndexedSet;
 import de.tudresden.inf.tcs.fcaapi.FCAImplication;
 import de.tudresden.inf.tcs.fcaapi.exception.IllegalAttributeException;
 import de.tudresden.inf.tcs.fcaapi.exception.IllegalObjectException;
-import de.tudresden.inf.tcs.fcalib.AbstractContext;
+import de.tudresden.inf.tcs.fcalib.PartialContext;
 import de.tudresden.inf.tcs.fcalib.Implication;
 import de.tudresden.inf.tcs.oclib.change.HistoryManager;
 import de.tudresden.inf.tcs.oclib.change.ClassAssertionChange;
@@ -62,7 +62,7 @@ import de.tudresden.inf.tcs.oclib.CounterExampleCandidates;
  * sertkaya@tcs.inf.tu-dresden.de
  */
 
-public class IndividualContext extends AbstractContext<OWLClass,OWLIndividual> {
+public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,IndividualObject> {
 
 	/**
 	 * The ontology manager.
@@ -89,10 +89,10 @@ public class IndividualContext extends AbstractContext<OWLClass,OWLIndividual> {
 	 */
 	private Set<OWLOntology> ontologies = null;
 	
-	/**
-	 * The 'local' set of objects.
-	 */
-	private IndexedSet<OWLIndividual> objects;
+	// /**
+	//  * The 'local' set of objects.
+	//  */
+	// private IndexedSet<OWLIndividual> objects;
 	
 	/**
 	 * The history manager for this context
@@ -118,7 +118,7 @@ public class IndividualContext extends AbstractContext<OWLClass,OWLIndividual> {
 		factory = manager.getOWLDataFactory();
 		ontology = o;
 		ontologies = manager.getImportsClosure(ontology);
-		objects = new ListSet<OWLIndividual>();
+		// objects = new ListSet<OWLIndividual>();
 		// history= new HistoryManager(this);
 		history= new HistoryManager();
 		counterExampleCandidates = new CounterExampleCandidates(this);
@@ -180,13 +180,42 @@ public class IndividualContext extends AbstractContext<OWLClass,OWLIndividual> {
 	 * attributes
 	 */
 	@Override
+	// public boolean addAttribute(OWLClass attribute) {
+	// 	boolean added = getAttributes().add(attribute);
+	// 	if (!added) {
+	// 		throw new IllegalAttributeException("Attribute " + attribute + " has already been added");
+	// 	}
+	// 	// TODO
+	// 	// this is not very efficient, but we need to update the set of 'local' objects
+	// 	getObjects();
+	// 	return added;
+	// }
 	public boolean addAttribute(OWLClass attribute) {
 		boolean added = getAttributes().add(attribute);
 		if (!added) {
 			throw new IllegalAttributeException("Attribute " + attribute + " has already been added");
 		}
-		// this is not very efficient, but we need to update the set of 'local' objects
-		getObjects();
+		try {
+			for (OWLIndividual individual : reasoner.getIndividuals(attribute, false)) {
+				IndividualObject o = new IndividualObject(individual,this);
+				o.getDescription().addAttribute(attribute);
+				addObject(o);
+			}
+			for (OWLIndividual individual : reasoner.getIndividuals(factory.getOWLObjectComplementOf(attribute), false)) {
+				IndividualObject o = new IndividualObject(individual,this);
+				o.getDescription().addNegatedAttribute(attribute);
+				addObject(o);
+			}
+			updateObjectDescriptions(Constants.AFTER_MODIFICATION);
+		}
+		catch (OWLReasonerException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		// catch (IllegalObjectException e) {
+		// 	e.printStackTrace();
+		// 	System.exit(-1);
+		// }
 		return added;
 	}
 	
@@ -195,14 +224,17 @@ public class IndividualContext extends AbstractContext<OWLClass,OWLIndividual> {
 	 * @param object the given object to be added
 	 * @return <code>true</code> if the object is successfully added
 	 */
-	@Override
-	public boolean addObject(OWLIndividual object) {
+	// @Override
+	public boolean addIndividualToOntology(OWLIndividual object) {
 		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(object, factory.getOWLThing());
 		AddAxiom  addAxiom = new AddAxiom(ontology,axiom); 
 		Set<OWLClass> attrs = new HashSet<OWLClass>();
 		try {
 			manager.applyChange(addAxiom);
 			reClassifyOntology();
+			IndividualObject indObj = new IndividualObject(object,this);
+			indObj.updateDescription(Constants.AFTER_MODIFICATION);
+			addObject(indObj);
 		}
 		catch (OWLOntologyChangeException e) {
 			e.printStackTrace();
@@ -220,7 +252,7 @@ public class IndividualContext extends AbstractContext<OWLClass,OWLIndividual> {
 	 * @param attributes the set of classes
 	 * @return <code>true</code> if the individual is successfully added
 	 */
-	public boolean addObject(OWLIndividual object, Set<OWLClass> attributes) {
+	public boolean addIndividualToOntology(OWLIndividual object, Set<OWLClass> attributes) {
 		// OWLObjectIntersectionOf description = toOWLDescription(attributes);
 		OWLDescription description = toOWLDescription(attributes);
 		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(object, description);
@@ -228,6 +260,13 @@ public class IndividualContext extends AbstractContext<OWLClass,OWLIndividual> {
 		try {
 			manager.applyChange(addAxiom);
 			reClassifyOntology();
+			IndividualObject indObj = new IndividualObject(object,this);
+			// for (OWLClass attribute : attributes) {
+			// 	indObj.getDescription().addAttribute(attribute);
+			// }
+			indObj.getDescription().addAttributes(attributes);
+			indObj.updateDescription(Constants.AFTER_MODIFICATION);
+			addObject(indObj);
 		}
 		catch (OWLOntologyChangeException e) {
 			e.printStackTrace();
@@ -237,158 +276,218 @@ public class IndividualContext extends AbstractContext<OWLClass,OWLIndividual> {
 		return true;
 	}
 
-	/**
-	 * Gets the objects of this individual context.
-	 * @return the ABox individuals that are instances of some attribute of this context
-	 */
-	@Override
-	public IndexedSet<OWLIndividual> getObjects() {
-		try {
-			// TODO: Which method is better?
-			// objects.addAll(reasoner.getIndividuals(factory.getOWLObjectUnionOf(getAttributes()), false));
-			for (OWLClass attribute : getAttributes()) {
-				objects.addAll(reasoner.getIndividuals(attribute, false));
-			}
-			// TODO: Which method is better?
-			// objects.addAll(reasoner.getIndividuals(
-			// 		factory.getOWLObjectComplementOf(factory.getOWLObjectIntersectionOf(getAttributes())),
-			// 		false));
-			for (OWLClass attribute : getAttributes()) {
-				objects.addAll(reasoner.getIndividuals(
-						factory.getOWLObjectComplementOf(attribute), false));
-			}
+	// /**
+	//  * Gets the objects of this individual context.
+	//  * @return the ABox individuals that are instances of some attribute of this context
+	//  */
+	// @Override
+	// public IndexedSet<OWLIndividual> getObjects() {
+	// 	try {
+	// 		// TODO: Which method is better?
+	// 		// objects.addAll(reasoner.getIndividuals(factory.getOWLObjectUnionOf(getAttributes()), false));
+	// 		for (OWLClass attribute : getAttributes()) {
+	// 			objects.addAll(reasoner.getIndividuals(attribute, false));
+	// 		}
+	// 		// TODO: Which method is better?
+	// 		// objects.addAll(reasoner.getIndividuals(
+	// 		// 		factory.getOWLObjectComplementOf(factory.getOWLObjectIntersectionOf(getAttributes())),
+	// 		// 		false));
+	// 		for (OWLClass attribute : getAttributes()) {
+	// 			objects.addAll(reasoner.getIndividuals(
+	// 					factory.getOWLObjectComplementOf(attribute), false));
+	// 		}
+	// 	}
+	// 	catch (OWLReasonerException e) {
+	// 		e.printStackTrace();
+	// 		System.exit(-1);
+	// 	}
+	// 	return objects;
+	// }
+	
+	// /**
+	//  * TODO: This is might be time consuming for a big ontology
+	//  */
+	// public OWLIndividual getObjectAtIndex(int index) {
+	// 	getObjects();
+	// 	return objects.getElementAt(index);
+	// }
+	
+	// /**
+	//  * Returns the object whose name is given.
+	//  * @param name the given name
+	//  * @return the object with name <code>name</code>, <code>null</code> if such an object
+	//  * does not exist
+	//  * @deprecated
+	//  */
+	// public OWLIndividual getObject(String name) {
+	// 	return null;
+	// }
+	
+	// /**
+	//  * Returns the number of objects of this context.
+	//  * @return the number of objects of this context
+	//  */
+	// public int getObjectCount() {
+	// 	// TODO: This is might be time consuming for a big ontology
+	// 	getObjects();
+	// 	return objects.size();
+	// }
+	
+	// /**
+	//  * Clears the 'local' set of objects
+	//  */
+	// public void clearObjects() {
+	// 	objects.clear();
+	// }
+	
+	public void updateObjectDescriptions(int updateType) {
+		for (IndividualObject obj : getObjects()) {
+			obj.updateDescription(updateType);
 		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			System.exit(-1);
+	}
+	
+	public void updateObjects(int updateType) {
+		switch (updateType) {
+		case Constants.AFTER_MODIFICATION:
+			try {
+				for (OWLClass attribute : getAttributes()) {
+					for (OWLIndividual ind : reasoner.getIndividuals(attribute, false)) {
+						if (!containsObject(ind)) {
+							IndividualObject indObj = new IndividualObject(ind,this);
+							// indObj.updateDescription();
+							indObj.getDescription().addAttribute(attribute);
+							addObject(indObj);
+						}
+					}
+					for (OWLIndividual ind : reasoner.getIndividuals(getFactory().getOWLObjectComplementOf(attribute), false)) {
+						if (!containsObject(ind)) {
+							IndividualObject indObj = new IndividualObject(ind,this);
+							// indObj.updateDescription();
+							indObj.getDescription().addNegatedAttribute(attribute);
+							addObject(indObj);
+						}
+					}
+				}
+			}
+			catch (OWLReasonerException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+			break;
+		case Constants.AFTER_UNDO:
+			try {
+				Set<IndividualObject> toBeRemoved = new HashSet<IndividualObject>();
+				for (IndividualObject object : getObjects()) {
+					if (!getOntology().containsEntityReference(object.getIdentifier())) {
+						toBeRemoved.add(object);
+					}
+				}
+				for (IndividualObject object : toBeRemoved) {
+					removeObject(object);
+				}
+			}
+			catch (IllegalObjectException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+			break;
 		}
-		return objects;
 	}
 	
-	/**
-	 * TODO: This is might be time consuming for a big ontology
-	 */
-	public OWLIndividual getObjectAtIndex(int index) {
-		getObjects();
-		return objects.getElementAt(index);
-	}
-	
-	/**
-	 * Returns the object whose name is given.
-	 * @param name the given name
-	 * @return the object with name <code>name</code>, <code>null</code> if such an object
-	 * does not exist
-	 * @deprecated
-	 */
-	public OWLIndividual getObject(String name) {
-		return null;
-	}
-	
-	/**
-	 * Returns the number of objects of this context.
-	 * @return the number of objects of this context
-	 */
-	public int getObjectCount() {
-		// TODO: This is might be time consuming for a big ontology
-		getObjects();
-		return objects.size();
-	}
-	
-	/**
-	 * Clears the 'local' set of objects
-	 */
-	public void clearObjects() {
-		objects.clear();
-	}
-	
+	// TODO
 	/**
 	 * Asserts that the given individual is an instance of the given type.
 	 * @param type the given type
 	 * @param ind the given individual about which the assertion will be made
 	 * @return <code>true</code> if the assertion is successfull
 	 */
-	public boolean addAttributeToObject(OWLClass type,OWLIndividual ind) {
-		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(ind, type);
+	public boolean addAttributeToObject(OWLClass type,IndividualObject indObj) {
+		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(indObj.getIdentifier(), type);
 		AddAxiom  addAxiom = new AddAxiom(ontology,axiom); 
 		try {
 			manager.applyChange(addAxiom);
 			reClassifyOntology();
+			updateObjects(Constants.AFTER_MODIFICATION);
+			updateObjectDescriptions(Constants.AFTER_MODIFICATION);
 		}
 		catch (OWLOntologyChangeException e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		history.push(new ClassAssertionChange(this,addAxiom,ind,type,false));
+		history.push(new ClassAssertionChange(this,addAxiom,indObj.getIdentifier(),type,false));
 		return true;
 	}
 	
+	// TODO
 	/**
 	 * Asserts that the given individual is an instance of the complement of the given type.
 	 * @param type the given type
 	 * @param ind the given individual about which the assertion will be made
 	 * @return <code>true</code> if the assertion is successfull
 	 */
-	public boolean addNegatedAttributeToObject(OWLClass type,OWLIndividual ind) {
-		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(ind, factory.getOWLObjectComplementOf(type));
+	public boolean addNegatedAttributeToObject(OWLClass type,IndividualObject indObj) {
+		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(indObj.getIdentifier(), factory.getOWLObjectComplementOf(type));
 		AddAxiom  addAxiom = new AddAxiom(ontology,axiom); 
 		try {
 			manager.applyChange(addAxiom);
 			reClassifyOntology();
+			updateObjects(Constants.AFTER_MODIFICATION);
+			updateObjectDescriptions(Constants.AFTER_MODIFICATION);
 		}
 		catch (OWLOntologyChangeException e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		history.push(new ClassAssertionChange(this,addAxiom,ind,type,true));
+		history.push(new ClassAssertionChange(this,addAxiom,indObj.getIdentifier(),type,true));
 		return true;
 	}
 	
-	/**
-	 * Removes the object from the set of objects of this context whose name is given.
-	 * @param name name of the object to be removed
-	 * @return <code>true</code> if the object with name <code>name</code> is successfully removed, 
-	 * <code>false</code>  otherwise
-	 * @throws IllegalObjectException if an object with name <code>name</code> does not exist
-	 * @deprecated
-	 */
-	@Override
-	public boolean removeObject(String arg0) throws IllegalObjectException {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	// /**
+	//  * Removes the object from the set of objects of this context whose name is given.
+	//  * @param name name of the object to be removed
+	//  * @return <code>true</code> if the object with name <code>name</code> is successfully removed, 
+	//  * <code>false</code>  otherwise
+	//  * @throws IllegalObjectException if an object with name <code>name</code> does not exist
+	//  * @deprecated
+	//  */
+	// @Override
+	// public boolean removeObject(String arg0) throws IllegalObjectException {
+	// 	// TODO Auto-generated method stub
+	// 	return false;
+	// }
 
-	/**
-	 * Removes a given  object from the set of objects of this context.
-	 * @param object the object to be removed
-	 * @return <code>true</code> if the object <code>object</code> is successfully removed, 
-	 * <code>false</code>  otherwise
-	 * @throws IllegalObjectException if the object <code>object</code> does not exist
-	 * @deprecated
-	 */
-	@Override
-	public boolean removeObject(OWLIndividual arg0)
-			throws IllegalObjectException {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	// /**
+	//  * Removes a given  object from the set of objects of this context.
+	//  * @param object the object to be removed
+	//  * @return <code>true</code> if the object <code>object</code> is successfully removed, 
+	//  * <code>false</code>  otherwise
+	//  * @throws IllegalObjectException if the object <code>object</code> does not exist
+	//  * @deprecated
+	//  */
+	// @Override
+	// public boolean removeObject(OWLIndividual arg0)
+	// 		throws IllegalObjectException {
+	// 	// TODO Auto-generated method stub
+	// 	return false;
+	// }
 
-	/**
-	 * Adds a given attribute to the attributes of the given object. 
-	 * @param attribute the attribute to be added
-	 * @param name name of the object to which <code>attribute</code> is to be added
-	 * @return <code>true</code> if of the <code>attribute</code> is successfully added, 
-	 * <code>false</code> otherwise
-	 * @throws IllegalAttributeException if the object with name <code>name</code> already has 
-	 * the attribute
-	 * @throws IllegalObjectException if an object with name <code>name</code> does not exist in 
-	 * this  context
-	 * @deprecated
-	 */
-	public boolean addAttributeToObject(OWLClass arg0, String name)
-			throws IllegalAttributeException, IllegalObjectException {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	// /**
+	//  * Adds a given attribute to the attributes of the given object. 
+	//  * @param attribute the attribute to be added
+	//  * @param name name of the object to which <code>attribute</code> is to be added
+	//  * @return <code>true</code> if of the <code>attribute</code> is successfully added, 
+	//  * <code>false</code> otherwise
+	//  * @throws IllegalAttributeException if the object with name <code>name</code> already has 
+	//  * the attribute
+	//  * @throws IllegalObjectException if an object with name <code>name</code> does not exist in 
+	//  * this  context
+	//  * @deprecated
+	//  */
+	// public boolean addAttributeToObject(OWLClass arg0, String name)
+	// 		throws IllegalAttributeException, IllegalObjectException {
+	// 	// TODO Auto-generated method stub
+	// 	return false;
+	// }
 	
 
 	/**
@@ -428,89 +527,96 @@ public class IndividualContext extends AbstractContext<OWLClass,OWLIndividual> {
 	 * @return <code>true</code> if <code>ind</code> is an instance of <code>cls</code>, 
 	 * <code>false</code> otherwise
 	 */
-	public boolean objectHasAttribute(OWLIndividual ind, OWLClass cls) {
-		boolean hasType = false;
-		try {
-			logger.debug("Asking the reasoner whether " + ind.getURI().getFragment() + " has type " + cls.getURI().getFragment());
-			hasType = reasoner.hasType(ind, cls, false);
-		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		return hasType;
-	}
+	// public boolean objectHasAttribute(OWLIndividual ind, OWLClass cls) {
+	// 	boolean hasType = false;
+	// 	try {
+	// 		logger.debug("Asking the reasoner whether " + ind.getURI().getFragment() + " has type " + cls.getURI().getFragment());
+	// 		hasType = reasoner.hasType(ind, cls, false);
+	// 	}
+	// 	catch (OWLReasonerException e) {
+	// 		e.printStackTrace();
+	// 		System.exit(-1);
+	// 	}
+	// 	return hasType;
+	// }
 	
-	/**
-	 * Checks whether the given individual is an instance of the complement of the given class.
-	 * @param ind the individual whose going to be tested
-	 * @param cls the class the that is going to be checked for membership
-	 * @return <code>true</code> if <code>ind</code> is an instance of the complement of 
-	 * <code>cls</code>,  <code>false</code> otherwise
-	 */
-	public boolean objectHasNegatedAttribute(OWLIndividual ind, OWLClass cls) {
-		boolean hasType = false;
-		try {
-			hasType = reasoner.hasType(ind, factory.getOWLObjectComplementOf(cls), false);
-		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		return hasType;
-	}
+	// public boolean objectHasAttribute(IndividualObject obj, OWLClass cls) {
+	// 	return obj.getDescription().containsAttribute(cls);
+	// }
 	
-	/**
-	 * Returns the second derivative of a given set of attributes. Works on the ABox, not on
-	 * a local set of objects.
-	 * @param x the given set of attributes
-	 * @return set of attributes equivalent to the second derivative of <code>x</code>
-	 */
-	@Override
-	public Set<OWLClass> doublePrime(Set<OWLClass> x) {
-		Set<OWLClass> tmp = new HashSet<OWLClass>(getAttributes());
-		Set<OWLClass> types = null; // OWLReasonerAdapter.flattenSetOfSets(subClsSets);
-		try {
-			for (OWLIndividual individual : getObjects()) {
-				types = OWLReasonerAdapter.flattenSetOfSets(reasoner.getTypes(individual, false));
-				if (types.containsAll(x)) {
-					for (OWLClass attribute : getAttributes()) {
-						if (reasoner.hasType(individual, factory.getOWLObjectComplementOf(attribute), false)) {
-							tmp.remove(attribute);
-						}
-					}
-				}
-			}
-		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		return tmp;
-	}
+	// /**
+	//  * Checks whether the given individual is an instance of the complement of the given class.
+	//  * @param ind the individual whose going to be tested
+	//  * @param cls the class the that is going to be checked for membership
+	//  * @return <code>true</code> if <code>ind</code> is an instance of the complement of 
+	//  * <code>cls</code>,  <code>false</code> otherwise
+	//  */
+	// public boolean objectHasNegatedAttribute(OWLIndividual ind, OWLClass cls) {
+	// 	boolean hasType = false;
+	// 	try {
+	// 		hasType = reasoner.hasType(ind, factory.getOWLObjectComplementOf(cls), false);
+	// 	}
+	// 	catch (OWLReasonerException e) {
+	// 		e.printStackTrace();
+	// 		System.exit(-1);
+	// 	}
+	// 	return hasType;
+	// }
+	// public boolean objectHasNegatedAttribute(IndividualObject obj, OWLClass cls) {
+	// 	return obj.getDescription().containsNegatedAttribute(cls);
+	// }
 	
-	/**
-	 * Checks whether the ontology refutes a given implication (subclass axiom)
-	 * @param question the implication to be checked for refutation
-	 * @return <code>true</code> if the ontology refutes <code>question</code>, <code>false</code> 
-	 * otherwise
-	 */
-	public boolean refutes(FCAImplication<OWLClass> question) {
-		try {
-			for (OWLIndividual ind : reasoner.getIndividuals(toOWLDescription(question.getPremise()),false)) {
-				for (OWLClass cls : question.getConclusion()) {
-					if (reasoner.hasType(ind, factory.getOWLObjectComplementOf(cls), false)) {
-						return true;
-					}
-				}
-			}
-		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		return false;
-	}
+	// /**
+	//  * Returns the second derivative of a given set of attributes. Works on the ABox, not on
+	//  * a local set of objects.
+	//  * @param x the given set of attributes
+	//  * @return set of attributes equivalent to the second derivative of <code>x</code>
+	//  */
+	// @Override
+	// public Set<OWLClass> doublePrime(Set<OWLClass> x) {
+	// 	Set<OWLClass> tmp = new HashSet<OWLClass>(getAttributes());
+	// 	Set<OWLClass> types = null; // OWLReasonerAdapter.flattenSetOfSets(subClsSets);
+	// 	try {
+	// 		for (OWLIndividual individual : getObjects()) {
+	// 			types = OWLReasonerAdapter.flattenSetOfSets(reasoner.getTypes(individual, false));
+	// 			if (types.containsAll(x)) {
+	// 				for (OWLClass attribute : getAttributes()) {
+	// 					if (reasoner.hasType(individual, factory.getOWLObjectComplementOf(attribute), false)) {
+	// 						tmp.remove(attribute);
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	catch (OWLReasonerException e) {
+	// 		e.printStackTrace();
+	// 		System.exit(-1);
+	// 	}
+	// 	return tmp;
+	// }
+	
+	// /**
+	//  * Checks whether the ontology refutes a given implication (subclass axiom)
+	//  * @param question the implication to be checked for refutation
+	//  * @return <code>true</code> if the ontology refutes <code>question</code>, <code>false</code> 
+	//  * otherwise
+	//  */
+	// public boolean refutes(FCAImplication<OWLClass> question) {
+	// 	try {
+	// 		for (OWLIndividual ind : reasoner.getIndividuals(toOWLDescription(question.getPremise()),false)) {
+	// 			for (OWLClass cls : question.getConclusion()) {
+	// 				if (reasoner.hasType(ind, factory.getOWLObjectComplementOf(cls), false)) {
+	// 					return true;
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	catch (OWLReasonerException e) {
+	// 		e.printStackTrace();
+	// 		System.exit(-1);
+	// 	}
+	// 	return false;
+	// }
 	
 	// /**
 	//  * Prepares a class of 'potential' counterexample to a given question.
@@ -522,17 +628,17 @@ public class IndividualContext extends AbstractContext<OWLClass,OWLIndividual> {
 	// 	return new CounterExampleCandidates(question,getReasoner(),getFactory());
 	// }
 	
-	/**
-	 * Checks whether a given object is a valid counterexample to a given implication. Is not used
-	 * for IndividualContext.
-	 * @param counterExample the object given 
-	 * @param implication the given implication 
-	 * @deprecated
-	 */
-	@Override
-	public boolean isCounterExampleValid(OWLIndividual counterExample, FCAImplication<OWLClass> implication) {
-		return refutes(implication);
-	}
+	// /**
+	//  * Checks whether a given object is a valid counterexample to a given implication. Is not used
+	//  * for IndividualContext.
+	//  * @param counterExample the object given 
+	//  * @param implication the given implication 
+	//  * @deprecated
+	//  */
+	// @Override
+	// public boolean isCounterExampleValid(OWLIndividual counterExample, FCAImplication<OWLClass> implication) {
+	// 	return refutes(implication);
+	// }
 	
 	/**
 	 * Given a set of class names, returns the description corresponding to the conjunction of them
@@ -718,10 +824,35 @@ public class IndividualContext extends AbstractContext<OWLClass,OWLIndividual> {
 		return retCode;
 	}
 	
-	@Override
-	public DLExpert getExpert() {
-		return (DLExpert) super.getExpert();
-	}
+	// /**
+	//  * Sets the expert for this context to the given expert
+	//  * @param e the given expert
+	//  */
+	// @Override
+	// public void setExpert(DLExpert e) {
+	// 	// logger.debug("Setting the expert " + e);
+	// 	dlExpert = e;
+	// }
+	
+	// /**
+	//  * Returns the expert of this context.
+	//  * @return the expert of this context
+	//  */
+	// @Override
+	// public DLExpert getExpert() {
+	// 	// logger.debug("Getting the expert");
+	// 	return (DLExpert) expert;
+	// }
+	
+	// /**
+	//  * Checks whether the expert has already been set.
+	//  * @return <code>true</code> if the <code>expert</code> has already been set,
+	//  * <code>false</code> otherwise
+	//  */
+	// @Override
+	// public boolean isExpertSet() {
+	// 	return getExpert() != null;
+	// }
 	
 	/**
 	 * The main method that keeps the exploration going. Given a set of attributes, it computes

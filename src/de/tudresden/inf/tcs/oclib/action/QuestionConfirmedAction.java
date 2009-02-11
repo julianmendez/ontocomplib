@@ -11,6 +11,7 @@ import org.semanticweb.owl.model.OWLOntologyChangeException;
 
 import de.tudresden.inf.tcs.fcaapi.FCAImplication;
 import de.tudresden.inf.tcs.oclib.change.NewSubClassAxiomChange;
+import de.tudresden.inf.tcs.oclib.Constants;
 
 
 /*
@@ -100,6 +101,9 @@ public class QuestionConfirmedAction extends AbstractExpertAction {
 			getContext().getManager().applyChange(addAxiom);
 			getContext().getHistory().push(new NewSubClassAxiomChange(getContext(),getQuestion(),addAxiom));
 			getContext().reClassifyOntology();
+			// update objects, update object descriptions
+			getContext().updateObjects(Constants.AFTER_MODIFICATION);
+			getContext().updateObjectDescriptions(Constants.AFTER_MODIFICATION);
 			getContext().continueExploration(getContext().getNextPremise(getQuestion().getPremise()));
 		}
 		catch (OWLOntologyChangeException x) {
