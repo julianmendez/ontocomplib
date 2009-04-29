@@ -503,8 +503,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	public void reClassifyOntology() {
 		// TODO: Is there a more efficient way to do this?
 		try {
-			// reasoner.unloadOntologies(ontologies);
-			// reasoner.loadOntologies(ontologies);
+			// Dmitry says for FaCT++ it is the safest to unload/load and still call classiyf()
+			// this is probably slower, but to be on the safe side we do so
+			reasoner.unloadOntologies(ontologies);
+			reasoner.loadOntologies(ontologies);
 			reasoner.classify();
 		}
 		catch (OWLReasonerException e) {
