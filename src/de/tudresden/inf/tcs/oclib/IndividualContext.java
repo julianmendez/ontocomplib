@@ -124,6 +124,13 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 		counterExampleCandidates = new CounterExampleCandidates(this);
 	}
 
+	/** Sets the reasoner of this context to the given reasoner.
+	 * @param r the given reasoner
+	 */
+	public void setReasoner(OWLReasoner r) {
+		reasoner = r;
+	}
+	
 	/**
 	 * Returns the reasoner.
 	 * @return the reasoner
@@ -496,8 +503,9 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	public void reClassifyOntology() {
 		// TODO: Is there a more efficient way to do this?
 		try {
-			reasoner.unloadOntologies(ontologies);
-			reasoner.loadOntologies(ontologies);
+			// reasoner.unloadOntologies(ontologies);
+			// reasoner.loadOntologies(ontologies);
+			reasoner.classify();
 		}
 		catch (OWLReasonerException e) {
 			e.printStackTrace();
