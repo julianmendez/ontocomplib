@@ -49,11 +49,13 @@ public class IndividualObject extends PartialObject<OWLClass,OWLIndividual> {
 					try {
 						// logger.debug("Asking the reasoner whether " + getName() + " has type " + type.getURI().getFragment());
 						if (getContext().getReasoner().hasType(getIdentifier(), type, false)) {
+						    // logger.info(getName() + " has type " + type.getURI().getFragment());
 							getDescription().addAttribute(type);
 						}
 						else {
 							// logger.debug("Asking the reasoner whether " + getName() + " has complement of type " + type.getURI().getFragment());
 							if (getContext().getReasoner().hasType(getIdentifier(), getContext().getFactory().getOWLObjectComplementOf(type), false)) {
+							    // logger.debug(getName() + " has complement of type " + type.getURI().getFragment());
 								getDescription().addNegatedAttribute(type);
 							}
 						}
