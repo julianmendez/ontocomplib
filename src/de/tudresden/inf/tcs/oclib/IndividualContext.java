@@ -777,8 +777,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 		// apply the change
 		try {
 			getManager().applyChange(addAxiom);
-			reasoner.unloadOntologies(ontologies);
-			reasoner.loadOntologies(ontologies);
+			// reasoner.unloadOntologies(ontologies);
+			// reasoner.loadOntologies(ontologies);
+			// reClassifyOntology unloads/loads and classifies
+			reClassifyOntology();
 			if (reasoner.isConsistent(getOntology())) {
 				retCode = false;
 			}
@@ -786,8 +788,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 				retCode = true;
 			}
 			getManager().applyChange(removeAxiom);
-			reasoner.unloadOntologies(ontologies);
-			reasoner.loadOntologies(ontologies);
+			// reasoner.unloadOntologies(ontologies);
+			// reasoner.loadOntologies(ontologies);
+			// reClassifyOntology unloads/loads and classifies
+			reClassifyOntology();
 		}
 		catch (OWLOntologyChangeException e) {
 			e.printStackTrace();
