@@ -73,6 +73,11 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	 * The reasoner.
 	 */
 	private OWLReasoner reasoner;
+	
+	/**
+	 * The ID of the reasoner
+	 */
+	private String reasonerID;
 
 	/**
 	 * The data factory.
@@ -129,6 +134,20 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	 */
 	public void setReasoner(OWLReasoner r) {
 		reasoner = r;
+	}
+	
+	/** Sets reasoner ID to the the ID of the current reasoner
+	 * @param id the given ID
+	 */
+	public void setReasonerID(String id) {
+		reasonerID = id;
+	}
+	
+	/** Returns the ID of the current reasoner.
+	 * @return the ID of the current reasoner
+	 */
+	public String getReasonerID() {
+		return reasonerID;
 	}
 	
 	/**
