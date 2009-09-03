@@ -528,6 +528,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 			// this is probably slower, but to be on the safe side we do so
 			reasoner.unloadOntologies(ontologies);
 			reasoner.loadOntologies(ontologies);
+			// uncommenting this causes problems with the classification progress window
 			// reasoner.classify();
 		}
 		catch (OWLReasonerException e) {
