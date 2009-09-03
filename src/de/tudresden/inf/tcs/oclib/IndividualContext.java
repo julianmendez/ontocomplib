@@ -31,6 +31,8 @@ import de.tudresden.inf.tcs.fcalib.Implication;
 import de.tudresden.inf.tcs.oclib.change.HistoryManager;
 import de.tudresden.inf.tcs.oclib.change.ClassAssertionChange;
 import de.tudresden.inf.tcs.oclib.change.NewIndividualChange;
+import de.tudresden.inf.tcs.oclib.change.AutomaticallyAcceptedSubClassAxiomChange;
+import de.tudresden.inf.tcs.oclib.change.AutomaticallyRejectedSubClassAxiomChange;
 import de.tudresden.inf.tcs.oclib.CounterExampleCandidates;
 
 
@@ -526,7 +528,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 			// this is probably slower, but to be on the safe side we do so
 			reasoner.unloadOntologies(ontologies);
 			reasoner.loadOntologies(ontologies);
-			reasoner.classify();
+			// reasoner.classify();
 		}
 		catch (OWLReasonerException e) {
 			e.printStackTrace();
@@ -914,6 +916,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 					logger.debug("Follows from background knowledge: " + implication);
 					getImplications().add(implication);
 					premise = getNextPremise(premise);
+					getHistory().push(new AutomaticallyAcceptedSubClassAxiomChange(this,implication));
 					continueExploration(premise);
 				}
 				else {
@@ -921,6 +924,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 					// inconsistent, which can be the case due to anonymous ABox individuals
 					if (implicationMakesOntologyInconsistent(implication)) {
 						logger.info("IMPLICATION " + implication + " WILL MAKE THE ONTOLOGY INCONSISTENT!");
+						getHistory().push(new AutomaticallyRejectedSubClassAxiomChange(this,implication));
 						getExpert().forceToCounterExample(implication);
 					}
 					else {
