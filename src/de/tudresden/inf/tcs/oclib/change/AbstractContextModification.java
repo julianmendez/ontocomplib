@@ -49,7 +49,7 @@ public abstract class AbstractContextModification implements ContextChange<OWLCl
 		return change;
 	}
 	
-	public abstract boolean canUndo();
+	// public abstract boolean canUndo();
 	
 	public void undo() {
 		RemoveAxiom removeAxiom = new RemoveAxiom(getContext().getOntology(),
