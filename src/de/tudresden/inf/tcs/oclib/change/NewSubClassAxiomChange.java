@@ -64,9 +64,9 @@ public class NewSubClassAxiomChange extends AbstractContextModification {
 		return ContextChange.NEW_IMPLICATION_MODIFICATION;
 	}
 	
-	public boolean canUndo() {
-		return true;
-	}
+	// public boolean canUndo() {
+	// 	return true;
+	// }
 	
 	@Override
 	public void undo() {
