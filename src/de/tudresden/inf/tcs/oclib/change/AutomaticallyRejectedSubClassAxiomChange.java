@@ -39,10 +39,10 @@ public class AutomaticallyRejectedSubClassAxiomChange extends AbstractContextMod
 		return implication;
 	}
 
-	@Override
-	public boolean canUndo() {
-		return false;
-	}
+	// @Override
+	// public boolean canUndo() {
+	// 	return false;
+	// }
 
 	public int getType() {
 		return ContextChange.AUTOMATICALLY_REJECTED_IMPLICATION;
