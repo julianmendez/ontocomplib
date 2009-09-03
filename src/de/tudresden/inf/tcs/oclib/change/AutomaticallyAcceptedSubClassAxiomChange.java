@@ -40,10 +40,10 @@ public class AutomaticallyAcceptedSubClassAxiomChange extends
 		return implication;
 	}
 	
-	@Override
-	public boolean canUndo() {
-		return false;
-	}
+	// @Override
+	// public boolean canUndo() {
+	// 	return false;
+	// }
 
 	public int getType() {
 		return ContextChange.AUTOMATICALLY_ACCEPTED_IMPLICATION;
