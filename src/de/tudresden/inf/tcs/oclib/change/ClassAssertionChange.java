@@ -61,6 +61,10 @@ public class ClassAssertionChange extends AbstractContextModification {
 		return ContextChange.OBJECT_HAS_ATTRIBUTE_MODIFICATION;
 	}
 	
+	public boolean canUndo() {
+		return true;
+	}
+	
 	// public OWLIndividual getIndividual() {
 	// 	return getChange().getAxiom().get
 	// }
