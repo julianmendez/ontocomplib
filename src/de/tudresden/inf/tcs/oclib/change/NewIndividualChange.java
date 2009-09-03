@@ -56,4 +56,7 @@ public class NewIndividualChange extends AbstractContextModification {
 		return ContextChange.NEW_OBJECT_MODIFICATION;
 	}
 	
+	public boolean canUndo() {
+		return true;
+	}
 }
