@@ -528,8 +528,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 			// this is probably slower, but to be on the safe side we do so
 			reasoner.unloadOntologies(ontologies);
 			reasoner.loadOntologies(ontologies);
-			// uncommenting this causes problems with the classification progress window
-			// reasoner.classify();
+			if (getReasonerID().equals(Constants.FACTPLUSPLUS_REASONER_ID)) {
+				// uncommenting this causes problems with the classification progress window
+				reasoner.classify();
+			}
 		}
 		catch (OWLReasonerException e) {
 			e.printStackTrace();
@@ -685,6 +687,13 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 		return factory.getOWLObjectIntersectionOf(x);
 	}
 	
+	public OWLSubClassAxiom toOWLSubClassAxiom(FCAImplication<OWLClass> imp) {
+		OWLSubClassAxiom axiom = getFactory().getOWLSubClassAxiom(
+				toOWLDescription(imp.getPremise()),
+				toOWLDescription(imp.getConclusion()));
+		return axiom;
+	}
+	
 	/**
 	 * Checks whether an implication (subclass axiom) already follows from the TBox.
 	 * @param implication the implication to be checked
@@ -790,9 +799,11 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	private boolean implicationMakesOntologyInconsistent(FCAImplication<OWLClass> imp) {
 		boolean retCode = false;
 		// first create the GCI
-		OWLSubClassAxiom axiom = getFactory().getOWLSubClassAxiom(
-				toOWLDescription(imp.getPremise()),
-				toOWLDescription(imp.getConclusion()));
+		// OWLSubClassAxiom axiom = getFactory().getOWLSubClassAxiom(
+		// 		toOWLDescription(imp.getPremise()),
+		// 		toOWLDescription(imp.getConclusion()));
+		OWLSubClassAxiom axiom = toOWLSubClassAxiom(imp);
+		
 		// create a new AddAxiom object
 		AddAxiom addAxiom = new AddAxiom(getOntology(),axiom);
 		RemoveAxiom removeAxiom = new RemoveAxiom(getOntology(),axiom);
@@ -822,7 +833,6 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 		catch (OWLReasonerException e) {
 			e.printStackTrace();
 			retCode = true;
-			logger.debug("dnm1");
 			// try {
 			// 	getManager().applyChange(removeAxiom);
 			// 	reasoner.unloadOntologies(ontologies);
@@ -914,11 +924,17 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 				implication = new Implication<OWLClass>(premise,conclusion);
 				setCurrentQuestion(implication);
 				if (followsFromBackgroundKnowledge(implication)) {
-					logger.debug("Follows from background knowledge: " + implication);
+					logger.info("Follows from background knowledge: " + implication);
 					getImplications().add(implication);
-					premise = getNextPremise(premise);
 					// getHistory().push(new AutomaticallyAcceptedSubClassAxiomChange(this,implication));
-					continueExploration(premise);
+					getExpert().askQuestion(implication);
+					getExpert().implicationFollowsFromBackgroundKnowledge(implication);
+					premise = getNextPremise(premise);
+					conclusion = doublePrime(premise);
+					conclusion.removeAll(premise);
+					implication = new Implication<OWLClass>(premise,conclusion);
+					setCurrentQuestion(implication);
+					// continueExploration(premise);
 				}
 				else {
 					// Before asking the expert first check whether this implication makes the KB
