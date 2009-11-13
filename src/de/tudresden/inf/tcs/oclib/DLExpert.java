@@ -39,4 +39,10 @@ public interface DLExpert extends Expert<OWLClass,OWLIndividual,IndividualObject
 	 * extend the {@link de.tudresden.inf.tcs.fcaapi.Expert} interface.
 	 */
 	public void forceToCounterExample(FCAImplication<OWLClass> implication);
+	
+	
+	/** Returns the ID of the current reasoner.
+	 * @return the ID of the current reasoner
+	 */
+	public String getReasonerID();
 }
