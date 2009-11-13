@@ -76,10 +76,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	 */
 	private OWLReasoner reasoner;
 	
-	/**
-	 * The ID of the reasoner
-	 */
-	private String reasonerID;
+	// /**
+	//  * The ID of the reasoner
+	//  */
+	// private String reasonerID;
 
 	/**
 	 * The data factory.
@@ -138,19 +138,19 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 		reasoner = r;
 	}
 	
-	/** Sets reasoner ID to the the ID of the current reasoner
-	 * @param id the given ID
-	 */
-	public void setReasonerID(String id) {
-		reasonerID = id;
-	}
+	// /** Sets reasoner ID to the the ID of the current reasoner
+	//  * @param id the given ID
+	//  */
+	// public void setReasonerID(String id) {
+	// 	reasonerID = id;
+	// }
 	
-	/** Returns the ID of the current reasoner.
-	 * @return the ID of the current reasoner
-	 */
-	public String getReasonerID() {
-		return reasonerID;
-	}
+	// /** Returns the ID of the current reasoner.
+	//  * @return the ID of the current reasoner
+	//  */
+	// public String getReasonerID() {
+	// 	return reasonerID;
+	// }
 	
 	/**
 	 * Returns the reasoner.
@@ -528,7 +528,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 			// this is probably slower, but to be on the safe side we do so
 			reasoner.unloadOntologies(ontologies);
 			reasoner.loadOntologies(ontologies);
-			if (getReasonerID().equals(Constants.FACTPLUSPLUS_REASONER_ID)) {
+			if (getExpert().getReasonerID().equals(Constants.FACTPLUSPLUS_REASONER_ID)) {
 				// uncommenting this causes problems with the classification progress window
 				reasoner.classify();
 			}
@@ -870,25 +870,26 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 		return retCode;
 	}
 	
-	// /**
-	//  * Sets the expert for this context to the given expert
-	//  * @param e the given expert
-	//  */
-	// @Override
-	// public void setExpert(DLExpert e) {
-	// 	// logger.debug("Setting the expert " + e);
-	// 	dlExpert = e;
-	// }
+	/**
+	 * Sets the expert for this context to the given expert
+	 * @param e the given expert
+	 */
+	private DLExpert dlExpert;
 	
-	// /**
-	//  * Returns the expert of this context.
-	//  * @return the expert of this context
-	//  */
-	// @Override
-	// public DLExpert getExpert() {
-	// 	// logger.debug("Getting the expert");
-	// 	return (DLExpert) expert;
-	// }
+	public void setExpert(DLExpert e) {
+	    logger.debug("Setting the expert " + e);
+		dlExpert = e;
+	}
+	
+	/**
+	 * Returns the expert of this context.
+	 * @return the expert of this context
+	 */
+	@Override
+	public DLExpert getExpert() {
+		// logger.debug("Getting the expert");
+		return dlExpert;
+	}
 	
 	// /**
 	//  * Checks whether the expert has already been set.
