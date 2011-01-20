@@ -659,6 +659,11 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		return axiom;
 	}
 	
+	private boolean isSubClassOf(OWLClassExpression premise, OWLClassExpression conclusion) {
+		OWLSubClassOfAxiom axiom = reasoner.getRootOntology().getOWLOntologyManager().getOWLDataFactory().getOWLSubClassOfAxiom(premise, conclusion);
+		return reasoner.isEntailed(axiom);
+	}
+	
 	/**
 	 * Checks whether an implication (subclass axiom) already follows from the TBox.
 	 * @param implication the implication to be checked
@@ -668,10 +673,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	@Override
 	protected boolean followsFromBackgroundKnowledge(FCAImplication<OWLClass> implication) {
 		boolean retCode = false;
-		OWLClass premise = toOWLDescription(implication.getPremise()).asOWLClass();
-		OWLClass conclusion = toOWLDescription(implication.getConclusion()).asOWLClass();
-			retCode = reasoner.getSuperClasses(premise,false).containsEntity(conclusion) 
-			|| reasoner.getEquivalentClasses(premise).contains(conclusion);
+		retCode = isSubClassOf(toOWLDescription(implication.getPremise()), toOWLDescription(implication.getConclusion()));
 		return retCode;
 	}
 	

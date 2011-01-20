@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import de.tudresden.inf.tcs.fcalib.PartialObject;
@@ -36,6 +38,14 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 		return context;
 	}
 	
+	private boolean hasType(OWLClassExpression type, OWLNamedIndividual individual) {
+		OWLClassAssertionAxiom axiom = getContext().getReasoner().getRootOntology().getOWLOntologyManager().
+			getOWLDataFactory().getOWLClassAssertionAxiom(type, individual);
+		return getContext().getReasoner().isEntailed(axiom);
+	}
+	
+
+	
 	public void updateDescription(int updateType) {
 		switch (updateType) {
 		case Constants.AFTER_MODIFICATION:
@@ -43,14 +53,14 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 			for (OWLClass type : getContext().getAttributes()) {
 				if (!getDescription().containsAttribute(type) && !getDescription().containsNegatedAttribute(type)) {
 						// logger.debug("Asking the reasoner whether " + getName() + " has type " + type.getIRI().getFragment());
-						if (getContext().getReasoner().getTypes(getIdentifier(), false).containsEntity(type)) {
+						if (hasType(type, getIdentifier())) {
 						    // logger.info(getName() + " has type " + type.getIRI().getFragment());
 							getDescription().addAttribute(type);
 						}
 						else {
-							OWLClass complement = getContext().getFactory().getOWLObjectComplementOf(type).asOWLClass();
+							OWLClassExpression complement = getContext().getFactory().getOWLObjectComplementOf(type);
 							// logger.debug("Asking the reasoner whether " + getName() + " has complement of type " + type.getIRI().getFragment());
-							if (getContext().getReasoner().getTypes(getIdentifier(), false).containsEntity(complement)) {
+							if (hasType(complement, getIdentifier())) {
 							    // logger.debug(getName() + " has complement of type " + type.getIRI().getFragment());
 								getDescription().addNegatedAttribute(type);
 							}
@@ -62,7 +72,7 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 			// if it is after an undo, then check only pluses and minuses. questions marks have not changed.
 				Set<OWLClass> toBeRemoved = new HashSet<OWLClass>();
 				for (OWLClass attribute : getDescription().getAttributes()) {
-					if (!getContext().getReasoner().getTypes(getIdentifier(), false).containsEntity(attribute)) {
+					if (!hasType(attribute, getIdentifier())) {
 						// getDescription().getAttributes().remove(attribute);
 						toBeRemoved.add(attribute);
 					}
@@ -71,8 +81,8 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 				
 				toBeRemoved.clear();
 				for (OWLClass attribute : getDescription().getNegatedAttributes()) {
-					OWLClass complement = getContext().getFactory().getOWLObjectComplementOf(attribute).asOWLClass();
-					if (!getContext().getReasoner().getTypes(getIdentifier(), false).containsEntity(complement)) {
+					OWLClassExpression complement = getContext().getFactory().getOWLObjectComplementOf(attribute);
+					if (!hasType(complement, getIdentifier())) {
 						// getDescription().getNegatedAttributes().remove(attribute);
 						toBeRemoved.add(attribute);
 					}
