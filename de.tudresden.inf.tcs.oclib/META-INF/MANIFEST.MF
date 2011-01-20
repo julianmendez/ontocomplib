@@ -7,8 +7,5 @@ Bundle-DocURL: http://lat.inf.tu-dresden.de/systems/ocp
 Bundle-Description: A library for ontology completion
 Bundle-Vendor: Baris Sertkaya
 Import-Package: org.apache.log4j
-Bundle-Version: 1.0
-Bundle-ClassPath: .,
- lib/fcalib.jar,
- lib/owlapi-bin.jar
-Require-Bundle: de.tudresden.inf.tcs.fcalib;bundle-version="1.0.0"
+Bundle-Version: 0.10.0
+Require-Bundle: de.tudresden.inf.tcs.fcalib;bundle-version="0.10.0"
