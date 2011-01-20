@@ -1,39 +1,32 @@
 package de.tudresden.inf.tcs.oclib;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.semanticweb.owlapi.model.AddAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyChangeException;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.RemoveAxiom;
+import org.semanticweb.owlapi.reasoner.InferenceType;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
-import org.semanticweb.owl.model.OWLClass;
-import org.semanticweb.owl.model.OWLDescription;
-import org.semanticweb.owl.model.OWLOntologyManager;
-import org.semanticweb.owl.model.OWLDataFactory;
-import org.semanticweb.owl.model.OWLOntology;
-// import org.semanticweb.owl.model.OWLObjectIntersectionOf;
-import org.semanticweb.owl.model.OWLClassAssertionAxiom;
-import org.semanticweb.owl.model.OWLSubClassAxiom;
-import org.semanticweb.owl.model.AddAxiom;
-import org.semanticweb.owl.model.RemoveAxiom;
-import org.semanticweb.owl.model.OWLOntologyChangeException;
-import org.semanticweb.owl.model.OWLIndividual;
-import org.semanticweb.owl.inference.OWLReasonerException;
-import org.semanticweb.owl.inference.OWLReasoner;
-// import org.semanticweb.owl.inference.OWLReasonerAdapter;
-
-// import de.tudresden.inf.tcs.fcalib.utils.ListSet;
-// import de.tudresden.inf.tcs.fcaapi.utils.IndexedSet;
 import de.tudresden.inf.tcs.fcaapi.FCAImplication;
 import de.tudresden.inf.tcs.fcaapi.exception.IllegalAttributeException;
 import de.tudresden.inf.tcs.fcaapi.exception.IllegalObjectException;
-import de.tudresden.inf.tcs.fcalib.PartialContext;
 import de.tudresden.inf.tcs.fcalib.Implication;
-import de.tudresden.inf.tcs.oclib.change.HistoryManager;
+import de.tudresden.inf.tcs.fcalib.PartialContext;
 import de.tudresden.inf.tcs.oclib.change.ClassAssertionChange;
+import de.tudresden.inf.tcs.oclib.change.HistoryManager;
 import de.tudresden.inf.tcs.oclib.change.NewIndividualChange;
-// import de.tudresden.inf.tcs.oclib.change.AutomaticallyAcceptedSubClassAxiomChange;
-// import de.tudresden.inf.tcs.oclib.change.AutomaticallyRejectedSubClassAxiomChange;
-import de.tudresden.inf.tcs.oclib.CounterExampleCandidates;
 
 
 /*
@@ -64,7 +57,7 @@ import de.tudresden.inf.tcs.oclib.CounterExampleCandidates;
  * sertkaya@tcs.inf.tu-dresden.de
  */
 
-public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,IndividualObject> {
+public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividual,IndividualObject> {
 
 	/**
 	 * The ontology manager.
@@ -223,27 +216,17 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 		if (!added) {
 			throw new IllegalAttributeException("Attribute " + attribute + " has already been added");
 		}
-		try {
-			for (OWLIndividual individual : reasoner.getIndividuals(attribute, false)) {
+			for (OWLNamedIndividual individual : reasoner.getInstances(attribute, false).getFlattened()) {
 				IndividualObject o = new IndividualObject(individual,this);
 				o.getDescription().addAttribute(attribute);
 				addObject(o);
 			}
-			for (OWLIndividual individual : reasoner.getIndividuals(factory.getOWLObjectComplementOf(attribute), false)) {
+			for (OWLNamedIndividual individual : reasoner.getInstances(factory.getOWLObjectComplementOf(attribute), false).getFlattened()) {
 				IndividualObject o = new IndividualObject(individual,this);
 				o.getDescription().addNegatedAttribute(attribute);
 				addObject(o);
 			}
 			updateObjectDescriptions(Constants.AFTER_MODIFICATION);
-		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		// catch (IllegalObjectException e) {
-		// 	e.printStackTrace();
-		// 	System.exit(-1);
-		// }
 		return added;
 	}
 	
@@ -253,8 +236,8 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	 * @return <code>true</code> if the object is successfully added
 	 */
 	// @Override
-	public boolean addIndividualToOntology(OWLIndividual object) {
-		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(object, factory.getOWLThing());
+	public boolean addIndividualToOntology(OWLNamedIndividual object) {
+		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(factory.getOWLThing(), object);
 		AddAxiom  addAxiom = new AddAxiom(ontology,axiom); 
 		Set<OWLClass> attrs = new HashSet<OWLClass>();
 		try {
@@ -280,10 +263,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	 * @param attributes the set of classes
 	 * @return <code>true</code> if the individual is successfully added
 	 */
-	public boolean addIndividualToOntology(OWLIndividual object, Set<OWLClass> attributes) {
+	public boolean addIndividualToOntology(OWLNamedIndividual object, Set<OWLClass> attributes) {
 		// OWLObjectIntersectionOf description = toOWLDescription(attributes);
-		OWLDescription description = toOWLDescription(attributes);
-		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(object, description);
+		OWLClassExpression description = toOWLDescription(attributes);
+		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(description, object);
 		AddAxiom  addAxiom = new AddAxiom(ontology,axiom); 
 		try {
 			manager.applyChange(addAxiom);
@@ -377,9 +360,8 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	public void updateObjects(int updateType) {
 		switch (updateType) {
 		case Constants.AFTER_MODIFICATION:
-			try {
 				for (OWLClass attribute : getAttributes()) {
-					for (OWLIndividual ind : reasoner.getIndividuals(attribute, false)) {
+					for (OWLNamedIndividual ind : reasoner.getInstances(attribute, false).getFlattened()) {
 						if (!containsObject(ind)) {
 							IndividualObject indObj = new IndividualObject(ind,this);
 							// indObj.updateDescription();
@@ -387,7 +369,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 							addObject(indObj);
 						}
 					}
-					for (OWLIndividual ind : reasoner.getIndividuals(getFactory().getOWLObjectComplementOf(attribute), false)) {
+					for (OWLNamedIndividual ind : reasoner.getInstances(getFactory().getOWLObjectComplementOf(attribute), false).getFlattened()) {
 						if (!containsObject(ind)) {
 							IndividualObject indObj = new IndividualObject(ind,this);
 							// indObj.updateDescription();
@@ -396,17 +378,12 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 						}
 					}
 				}
-			}
-			catch (OWLReasonerException e) {
-				e.printStackTrace();
-				System.exit(-1);
-			}
 			break;
 		case Constants.AFTER_UNDO:
 			try {
 				Set<IndividualObject> toBeRemoved = new HashSet<IndividualObject>();
 				for (IndividualObject object : getObjects()) {
-					if (!getOntology().containsEntityReference(object.getIdentifier())) {
+					if (!getOntology().containsEntityInSignature(object.getIdentifier())) {
 						toBeRemoved.add(object);
 					}
 				}
@@ -430,7 +407,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	 * @return <code>true</code> if the assertion is successfull
 	 */
 	public boolean addAttributeToObject(OWLClass type,IndividualObject indObj) {
-		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(indObj.getIdentifier(), type);
+		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(type, indObj.getIdentifier());
 		AddAxiom  addAxiom = new AddAxiom(ontology,axiom); 
 		try {
 			manager.applyChange(addAxiom);
@@ -454,7 +431,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	 * @return <code>true</code> if the assertion is successfull
 	 */
 	public boolean addNegatedAttributeToObject(OWLClass type,IndividualObject indObj) {
-		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(indObj.getIdentifier(), factory.getOWLObjectComplementOf(type));
+		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(factory.getOWLObjectComplementOf(type), indObj.getIdentifier());
 		AddAxiom  addAxiom = new AddAxiom(ontology,axiom); 
 		try {
 			manager.applyChange(addAxiom);
@@ -523,20 +500,13 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	 */
 	public void reClassifyOntology() {
 		// TODO: Is there a more efficient way to do this?
-		try {
-			// Dmitry says for FaCT++ it is the safest to unload/load and still call classiyf()
+			// Dmitry says for FaCT++ it is the safest to unload/load and still call classify()
 			// this is probably slower, but to be on the safe side we do so
-			reasoner.unloadOntologies(ontologies);
-			reasoner.loadOntologies(ontologies);
+			loadOntologies(ontologies);
 			if (getExpert().getReasonerID().equals(Constants.FACTPLUSPLUS_REASONER_ID)) {
 				// uncommenting this causes problems with the classification progress window
-				reasoner.classify();
+				reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
 			}
-		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
 	}
 	
 	/**
@@ -545,12 +515,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	 */
 	public boolean isOntologyConsistent() {
 		boolean consistent = false;
-		try {
-			consistent = reasoner.isConsistent(ontology);
-		}
-		catch (OWLReasonerException e) {
-			logger.error("Ontology became inconsistent");
-		}
+		consistent = reasoner.isConsistent();
 		return consistent;
 	}
 	
@@ -680,15 +645,15 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	 * @return the concept description that is the conjunction of the names in <code>x</code>
 	 */
 	// public OWLObjectIntersectionOf toOWLDescription(Set<OWLClass> x) {
-	public OWLDescription toOWLDescription(Set<OWLClass> x) {
+	public OWLClassExpression toOWLDescription(Set<OWLClass> x) {
 		if (x.isEmpty()) {
 			return getFactory().getOWLThing();
 		}
 		return factory.getOWLObjectIntersectionOf(x);
 	}
 	
-	public OWLSubClassAxiom toOWLSubClassAxiom(FCAImplication<OWLClass> imp) {
-		OWLSubClassAxiom axiom = getFactory().getOWLSubClassAxiom(
+	public OWLSubClassOfAxiom toOWLSubClassAxiom(FCAImplication<OWLClass> imp) {
+		OWLSubClassOfAxiom axiom = getFactory().getOWLSubClassOfAxiom(
 				toOWLDescription(imp.getPremise()),
 				toOWLDescription(imp.getConclusion()));
 		return axiom;
@@ -703,14 +668,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 	@Override
 	protected boolean followsFromBackgroundKnowledge(FCAImplication<OWLClass> implication) {
 		boolean retCode = false;
-		try {
-			retCode = reasoner.isSubClassOf(toOWLDescription(implication.getPremise()),
-					toOWLDescription(implication.getConclusion()));
-		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
+		OWLClass premise = toOWLDescription(implication.getPremise()).asOWLClass();
+		OWLClass conclusion = toOWLDescription(implication.getConclusion()).asOWLClass();
+			retCode = reasoner.getSuperClasses(premise,false).containsEntity(conclusion) 
+			|| reasoner.getEquivalentClasses(premise).contains(conclusion);
 		return retCode;
 	}
 	
@@ -802,7 +763,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 		// OWLSubClassAxiom axiom = getFactory().getOWLSubClassAxiom(
 		// 		toOWLDescription(imp.getPremise()),
 		// 		toOWLDescription(imp.getConclusion()));
-		OWLSubClassAxiom axiom = toOWLSubClassAxiom(imp);
+		OWLSubClassOfAxiom axiom = toOWLSubClassAxiom(imp);
 		
 		// create a new AddAxiom object
 		AddAxiom addAxiom = new AddAxiom(getOntology(),axiom);
@@ -814,7 +775,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 			// reasoner.loadOntologies(ontologies);
 			// reClassifyOntology unloads/loads and classifies
 			reClassifyOntology();
-			if (reasoner.isConsistent(getOntology())) {
+			if (reasoner.isConsistent()) {
 				retCode = false;
 			}
 			else {
@@ -829,25 +790,6 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 		catch (OWLOntologyChangeException e) {
 			e.printStackTrace();
 			System.exit(-1);
-		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			retCode = true;
-			// try {
-			// 	getManager().applyChange(removeAxiom);
-			// 	reasoner.unloadOntologies(ontologies);
-			// 	reasoner.loadOntologies(ontologies);
-			// }
-			// catch (OWLOntologyChangeException x) {
-			// 	x.printStackTrace();
-			// 	System.exit(-1);
-			// }
-			// catch (OWLReasonerException x) {
-			// 	x.printStackTrace();
-			// 	logger.fatal("reasoner exception, exiting...");
-			// 	System.exit(-1);
-			// }
-			
 		}
 		// logger.debug("dnm2");
 		// // if (!retCode) {
@@ -966,6 +908,18 @@ public class IndividualContext extends PartialContext<OWLClass,OWLIndividual,Ind
 			// stop the exploration
 			explorationFinished();
 			logger.debug("objects: " + getObjects());
+		}
+	}
+
+	public void loadOntologies(Set<OWLOntology> ontologies) {
+		reasoner.getRootOntology().getOWLOntologyManager().clearIRIMappers();
+		try {
+			for (OWLOntology ontology : ontologies) {
+					reasoner.getRootOntology().getOWLOntologyManager().loadOntologyFromOntologyDocument(
+							ontology.getOntologyID().getDefaultDocumentIRI());
+			}
+		} catch (OWLOntologyCreationException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

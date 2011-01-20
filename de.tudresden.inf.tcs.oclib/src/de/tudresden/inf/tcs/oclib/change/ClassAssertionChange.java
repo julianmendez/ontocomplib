@@ -1,14 +1,11 @@
 package de.tudresden.inf.tcs.oclib.change;
 
-import org.semanticweb.owl.model.AddAxiom;
-import org.semanticweb.owl.model.OWLIndividual;
-import org.semanticweb.owl.model.OWLClass;
-// import org.semanticweb.owl.model.RemoveAxiom;
-// import org.semanticweb.owl.model.OWLOntologyChangeException;
+import org.semanticweb.owlapi.model.AddAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import de.tudresden.inf.tcs.fcaapi.change.ContextChange;
 import de.tudresden.inf.tcs.oclib.IndividualContext;
-import de.tudresden.inf.tcs.oclib.change.AbstractContextModification;
 
 
 /*
@@ -33,10 +30,10 @@ import de.tudresden.inf.tcs.oclib.change.AbstractContextModification;
 
 public class ClassAssertionChange extends AbstractContextModification {
 
-	private OWLIndividual object;
+	private OWLNamedIndividual object;
 	private OWLClass attribute;
 	private boolean complemented;
-	public ClassAssertionChange(IndividualContext c, AddAxiom ch, OWLIndividual o, OWLClass a,
+	public ClassAssertionChange(IndividualContext c, AddAxiom ch, OWLNamedIndividual o, OWLClass a,
 			boolean complement) {
 	// public ClassAssertionChange(IndividualContext c, AddAxiom ch) {
 		super(c,ch);
@@ -45,7 +42,7 @@ public class ClassAssertionChange extends AbstractContextModification {
 		complemented = complement;
 	}
 	
-	public OWLIndividual getObject() {
+	public OWLNamedIndividual getObject() {
 		return object;
 	}
 	

@@ -3,15 +3,14 @@ package de.tudresden.inf.tcs.oclib.action;
 import java.awt.event.ActionEvent;
 
 import org.apache.log4j.Logger;
-
-import org.semanticweb.owl.model.OWLClass;
-import org.semanticweb.owl.model.OWLSubClassAxiom;
-import org.semanticweb.owl.model.AddAxiom;
-import org.semanticweb.owl.model.OWLOntologyChangeException;
+import org.semanticweb.owlapi.model.AddAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLOntologyChangeException;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 
 import de.tudresden.inf.tcs.fcaapi.FCAImplication;
-import de.tudresden.inf.tcs.oclib.change.NewSubClassAxiomChange;
 import de.tudresden.inf.tcs.oclib.Constants;
+import de.tudresden.inf.tcs.oclib.change.NewSubClassAxiomChange;
 
 
 /*
@@ -88,7 +87,7 @@ public class QuestionConfirmedAction extends AbstractExpertAction {
 	public void actionPerformed(ActionEvent e) {
 		logger.info("Expert accepted implication: " + getQuestion());
 		// first create the GCI
-		OWLSubClassAxiom axiom = getContext().getFactory().getOWLSubClassAxiom(
+		OWLSubClassOfAxiom axiom = getContext().getFactory().getOWLSubClassOfAxiom(
 				getContext().toOWLDescription(getQuestion().getPremise()),
 				getContext().toOWLDescription(getQuestion().getConclusion()));
 		// create a new AddAxiom object

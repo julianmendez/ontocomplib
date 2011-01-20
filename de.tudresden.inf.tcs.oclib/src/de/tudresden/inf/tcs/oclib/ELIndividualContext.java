@@ -1,21 +1,20 @@
 package de.tudresden.inf.tcs.oclib;
 
-import java.util.Set;
 import java.util.HashSet;
-import java.net.URI;
+import java.util.Set;
 
-import org.semanticweb.owl.inference.OWLReasoner;
-import org.semanticweb.owl.inference.OWLReasonerException;
-
-import org.semanticweb.owl.model.OWLOntology;
-import org.semanticweb.owl.model.OWLClass;
-import org.semanticweb.owl.model.OWLDescription;
-import org.semanticweb.owl.model.OWLIndividual;
-import org.semanticweb.owl.model.OWLOntologyManager;
-import org.semanticweb.owl.model.OWLDisjointClassesAxiom;
-import org.semanticweb.owl.model.OWLClassAssertionAxiom;
-import org.semanticweb.owl.model.AddAxiom;
-import org.semanticweb.owl.model.OWLOntologyChangeException;
+import org.semanticweb.owlapi.model.AddAxiom;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyChangeException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.reasoner.InferenceType;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import de.tudresden.inf.tcs.fcaapi.exception.IllegalAttributeException;
 import de.tudresden.inf.tcs.fcaapi.exception.IllegalObjectException;
@@ -43,14 +42,14 @@ public class ELIndividualContext extends IndividualContext {
 			throw new IllegalAttributeException("Attribute " + attribute + " has already been added");
 		}
 		try {
-			for (OWLIndividual individual : getReasoner().getIndividuals(attribute, false)) {
+			for (OWLNamedIndividual individual : getReasoner().getInstances(attribute, false).getFlattened()) {
 				ELIndividualObject o = new ELIndividualObject(individual,this);
 				o.getDescription().addAttribute(attribute);
 				addObject(o);
 			}
 			// the CEL reasoner is being used
 			// add new concept name for the complement of the added attribute
-			OWLClass complementOfAttribute = getFactory().getOWLClass(URI.create(getOntology().getURI() + 
+			OWLClass complementOfAttribute = getFactory().getOWLClass(IRI.create(getOntology().getOntologyID().getOntologyIRI() + 
 					Constants.EL_COMPLEMENT_CONCEPT_PREFIX +  attribute));
 			// make them disjoint
 			HashSet<OWLClass> disjoint = new HashSet<OWLClass>();
@@ -64,10 +63,6 @@ public class ELIndividualContext extends IndividualContext {
 			//TODO
 			// updateObjectDescriptions should be overridden for EL contexts
 			updateObjectDescriptions(Constants.AFTER_MODIFICATION);
-		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			System.exit(-1);
 		}
 		catch (OWLOntologyChangeException e) {
 			e.printStackTrace();
@@ -84,8 +79,9 @@ public class ELIndividualContext extends IndividualContext {
 	 */
 	@Override
 	public boolean addNegatedAttributeToObject(OWLClass type,IndividualObject indObj) {
-		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(indObj.getIdentifier(), 
-				getFactory().getOWLClass(URI.create(getOntology().getURI() + Constants.EL_COMPLEMENT_CONCEPT_PREFIX + type)));
+		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom( 
+				getFactory().getOWLClass(IRI.create(getOntology().getOntologyID().getOntologyIRI() + Constants.EL_COMPLEMENT_CONCEPT_PREFIX + type)),
+				indObj.getIdentifier());
 		AddAxiom  addAxiom = new AddAxiom(getOntology(),axiom); 
 		try {
 			getManager().applyChange(addAxiom);
@@ -107,8 +103,8 @@ public class ELIndividualContext extends IndividualContext {
 	 * @return <code>true</code> if the object is successfully added
 	 */
 	@Override
-	public boolean addIndividualToOntology(OWLIndividual object) {
-		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(object, getFactory().getOWLThing());
+	public boolean addIndividualToOntology(OWLNamedIndividual object) {
+		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(getFactory().getOWLThing(), object);
 		AddAxiom  addAxiom = new AddAxiom(getOntology(),axiom); 
 		Set<OWLClass> attrs = new HashSet<OWLClass>();
 		try {
@@ -134,10 +130,10 @@ public class ELIndividualContext extends IndividualContext {
 	 * @param attributes the set of classes
 	 * @return <code>true</code> if the individual is successfully added
 	 */
-	public boolean addIndividualToOntology(OWLIndividual object, Set<OWLClass> attributes) {
+	public boolean addIndividualToOntology(OWLNamedIndividual object, Set<OWLClass> attributes) {
 		// OWLObjectIntersectionOf description = toOWLDescription(attributes);
-		OWLDescription description = toOWLDescription(attributes);
-		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(object, description);
+		OWLClassExpression description = toOWLDescription(attributes);
+		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(description, object);
 		AddAxiom  addAxiom = new AddAxiom(getOntology(),axiom); 
 		try {
 			getManager().applyChange(addAxiom);
@@ -161,9 +157,8 @@ public class ELIndividualContext extends IndividualContext {
 	public void updateObjects(int updateType) {
 		switch (updateType) {
 		case Constants.AFTER_MODIFICATION:
-			try {
 				for (OWLClass attribute : getAttributes()) {
-					for (OWLIndividual ind : getReasoner().getIndividuals(attribute, false)) {
+					for (OWLNamedIndividual ind : getReasoner().getInstances(attribute, false).getFlattened()) {
 						if (!containsObject(ind)) {
 							ELIndividualObject indObj = new ELIndividualObject(ind,this);
 							// indObj.updateDescription();
@@ -171,10 +166,10 @@ public class ELIndividualContext extends IndividualContext {
 							addObject(indObj);
 						}
 					}
-					for (OWLIndividual ind : getReasoner().getIndividuals(
+					for (OWLNamedIndividual ind : getReasoner().getInstances(
 							getFactory().getOWLClass(
-									URI.create(getOntology().getURI() + Constants.EL_COMPLEMENT_CONCEPT_PREFIX + attribute)),
-							false)) {
+									IRI.create(getOntology().getOntologyID().getOntologyIRI() + Constants.EL_COMPLEMENT_CONCEPT_PREFIX + attribute)),
+							false).getFlattened()) {
 						if (!containsObject(ind)) {
 							ELIndividualObject indObj = new ELIndividualObject(ind,this);
 							// indObj.updateDescription();
@@ -183,17 +178,12 @@ public class ELIndividualContext extends IndividualContext {
 						}
 					}
 				}
-			}
-			catch (OWLReasonerException e) {
-				e.printStackTrace();
-				System.exit(-1);
-			}
 			break;
 		case Constants.AFTER_UNDO:
 			try {
 				HashSet<IndividualObject> toBeRemoved = new HashSet<IndividualObject>();
 				for (IndividualObject object : getObjects()) {
-					if (!getOntology().containsEntityReference(object.getIdentifier())) {
+					if (!getOntology().containsEntityInSignature(object.getIdentifier())) {
 						toBeRemoved.add(object);
 					}
 				}
@@ -215,16 +205,9 @@ public class ELIndividualContext extends IndividualContext {
 	@Override
 	public void reClassifyOntology() {
 		// TODO: Is there a more efficient way to do this?
-		try {
-			// Julian tells to use clearOntology() and loadOntologies()
-			getReasoner().clearOntologies();
-			getReasoner().loadOntologies(getManager().getImportsClosure(getOntology()));
-			getReasoner().classify();
-		}
-		catch (OWLReasonerException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
+		// Julian tells to use clearOntology() and loadOntologies()
+		loadOntologies(getManager().getImportsClosure(getOntology()));
+		getReasoner().precomputeInferences(InferenceType.CLASS_HIERARCHY); 
 	}
 
 }

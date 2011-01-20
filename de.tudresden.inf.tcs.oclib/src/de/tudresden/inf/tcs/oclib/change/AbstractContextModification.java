@@ -1,13 +1,11 @@
 package de.tudresden.inf.tcs.oclib.change;
 
-import org.semanticweb.owl.model.OWLClass;
-import org.semanticweb.owl.model.AddAxiom;
-import org.semanticweb.owl.model.RemoveAxiom;
-import org.semanticweb.owl.model.OWLOntologyChangeException;
-
+import org.semanticweb.owlapi.model.AddAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLOntologyChangeException;
+import org.semanticweb.owlapi.model.RemoveAxiom;
 
 import de.tudresden.inf.tcs.fcaapi.change.ContextChange;
-
 import de.tudresden.inf.tcs.oclib.IndividualContext;
 
 

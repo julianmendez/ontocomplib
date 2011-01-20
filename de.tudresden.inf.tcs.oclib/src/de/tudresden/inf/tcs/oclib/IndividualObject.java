@@ -1,18 +1,14 @@
 package de.tudresden.inf.tcs.oclib;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
-// import java.net.URI;
-// import org.apache.log4j.Logger;
-
-import org.semanticweb.owl.model.OWLClass;
-import org.semanticweb.owl.model.OWLIndividual;
-import org.semanticweb.owl.inference.OWLReasonerException;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import de.tudresden.inf.tcs.fcalib.PartialObject;
 
-public class IndividualObject extends PartialObject<OWLClass,OWLIndividual> {
+public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual> {
 
 	private IndividualContext context;
 	
@@ -21,19 +17,19 @@ public class IndividualObject extends PartialObject<OWLClass,OWLIndividual> {
 	//  */
 	// private static final Logger logger = Logger.getLogger(IndividualObject.class);
 
-	public IndividualObject(OWLIndividual individual,IndividualContext c) {
+	public IndividualObject(OWLNamedIndividual individual,IndividualContext c) {
 		super(individual);
 		context = c;
 	}
 	
-	public IndividualObject(OWLIndividual individual,Set<OWLClass> types,IndividualContext c) {
+	public IndividualObject(OWLNamedIndividual individual,Set<OWLClass> types,IndividualContext c) {
 		super(individual,types);
 		context = c;
 	}
 	
 	@Override
 	public String getName() {
-		return getIdentifier().getURI().getFragment();
+		return getIdentifier().getIRI().getFragment();
 	}
 	
 	public IndividualContext getContext() {
@@ -46,33 +42,27 @@ public class IndividualObject extends PartialObject<OWLClass,OWLIndividual> {
 			// if it is after context modification, then only check question marks. pluses and minuses have not changed.
 			for (OWLClass type : getContext().getAttributes()) {
 				if (!getDescription().containsAttribute(type) && !getDescription().containsNegatedAttribute(type)) {
-					try {
-						// logger.debug("Asking the reasoner whether " + getName() + " has type " + type.getURI().getFragment());
-						if (getContext().getReasoner().hasType(getIdentifier(), type, false)) {
-						    // logger.info(getName() + " has type " + type.getURI().getFragment());
+						// logger.debug("Asking the reasoner whether " + getName() + " has type " + type.getIRI().getFragment());
+						if (getContext().getReasoner().getTypes(getIdentifier(), false).containsEntity(type)) {
+						    // logger.info(getName() + " has type " + type.getIRI().getFragment());
 							getDescription().addAttribute(type);
 						}
 						else {
-							// logger.debug("Asking the reasoner whether " + getName() + " has complement of type " + type.getURI().getFragment());
-							if (getContext().getReasoner().hasType(getIdentifier(), getContext().getFactory().getOWLObjectComplementOf(type), false)) {
-							    // logger.debug(getName() + " has complement of type " + type.getURI().getFragment());
+							OWLClass complement = getContext().getFactory().getOWLObjectComplementOf(type).asOWLClass();
+							// logger.debug("Asking the reasoner whether " + getName() + " has complement of type " + type.getIRI().getFragment());
+							if (getContext().getReasoner().getTypes(getIdentifier(), false).containsEntity(complement)) {
+							    // logger.debug(getName() + " has complement of type " + type.getIRI().getFragment());
 								getDescription().addNegatedAttribute(type);
 							}
 						}
-					}
-					catch (OWLReasonerException e) {
-						e.printStackTrace();
-						System.exit(-1);
-					}
 				}
 			}
 			break;
 		case Constants.AFTER_UNDO:
 			// if it is after an undo, then check only pluses and minuses. questions marks have not changed.
-			try {
 				Set<OWLClass> toBeRemoved = new HashSet<OWLClass>();
 				for (OWLClass attribute : getDescription().getAttributes()) {
-					if (!getContext().getReasoner().hasType(getIdentifier(), attribute, false)) {
+					if (!getContext().getReasoner().getTypes(getIdentifier(), false).containsEntity(attribute)) {
 						// getDescription().getAttributes().remove(attribute);
 						toBeRemoved.add(attribute);
 					}
@@ -81,17 +71,13 @@ public class IndividualObject extends PartialObject<OWLClass,OWLIndividual> {
 				
 				toBeRemoved.clear();
 				for (OWLClass attribute : getDescription().getNegatedAttributes()) {
-					if (!getContext().getReasoner().hasType(getIdentifier(), getContext().getFactory().getOWLObjectComplementOf(attribute), false)) {
+					OWLClass complement = getContext().getFactory().getOWLObjectComplementOf(attribute).asOWLClass();
+					if (!getContext().getReasoner().getTypes(getIdentifier(), false).containsEntity(complement)) {
 						// getDescription().getNegatedAttributes().remove(attribute);
 						toBeRemoved.add(attribute);
 					}
 				}
 				getDescription().getNegatedAttributes().removeAll(toBeRemoved);
-			}
-			catch (OWLReasonerException e) {
-				e.printStackTrace();
-				System.exit(-1);
-			}
 			break;
 		}
 	}

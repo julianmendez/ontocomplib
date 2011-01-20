@@ -1,9 +1,9 @@
 package de.tudresden.inf.tcs.oclib.change;
 
-import org.semanticweb.owl.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClass;
 
-import de.tudresden.inf.tcs.fcaapi.change.ContextChange;
 import de.tudresden.inf.tcs.fcaapi.FCAImplication;
+import de.tudresden.inf.tcs.fcaapi.change.ContextChange;
 import de.tudresden.inf.tcs.oclib.IndividualContext;
 
 /*

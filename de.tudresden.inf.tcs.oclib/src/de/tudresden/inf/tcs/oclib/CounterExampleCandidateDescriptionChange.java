@@ -5,13 +5,11 @@ package de.tudresden.inf.tcs.oclib;
 // import org.semanticweb.owl.model.OWLOntologyManager;
 // import org.semanticweb.owl.model.OWLDataFactory;
 // import org.semanticweb.owl.model.OWLOntology;
-import org.semanticweb.owl.model.OWLClass;
-import org.semanticweb.owl.model.OWLIndividual;
-import org.semanticweb.owl.model.OWLClassAssertionAxiom;
-import org.semanticweb.owl.model.RemoveAxiom;
-import org.semanticweb.owl.model.OWLOntologyChangeException;
-// import org.semanticweb.owl.inference.OWLReasoner;
-import org.semanticweb.owl.inference.OWLReasonerException;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLOntologyChangeException;
+import org.semanticweb.owlapi.model.RemoveAxiom;
 
 
 /*
@@ -40,13 +38,13 @@ public class CounterExampleCandidateDescriptionChange {
 	// private OWLReasoner reasoner;
 	// private OWLDataFactory factory;
 	// private OWLOntology ontology;
-	private OWLIndividual candidate;
+	private OWLNamedIndividual candidate;
 	private OWLClass changedType;
 	// private Set<OWLOntology> ontologies = null;
 	private boolean isTypePlus;
 	private IndividualContext theContext;
 	
-	public CounterExampleCandidateDescriptionChange(OWLIndividual candidate, OWLClass cls, boolean plus,
+	public CounterExampleCandidateDescriptionChange(OWLNamedIndividual candidate, OWLClass cls, boolean plus,
 			IndividualContext context) {
 		// manager = context.getManager();
 		// reasoner = context.getReasoner();
@@ -61,23 +59,19 @@ public class CounterExampleCandidateDescriptionChange {
 	public void undo() {
 		OWLClassAssertionAxiom axiom = null;
 		if (isTypePlus) {
-			axiom = theContext.getFactory().getOWLClassAssertionAxiom(candidate, changedType);
+			axiom = theContext.getFactory().getOWLClassAssertionAxiom(changedType, candidate);
 		}
 		else {
-			axiom = theContext.getFactory().getOWLClassAssertionAxiom(candidate, 
-					theContext.getFactory().getOWLObjectComplementOf(changedType));
+			axiom = theContext.getFactory().getOWLClassAssertionAxiom( 
+					theContext.getFactory().getOWLObjectComplementOf(changedType), candidate);
 		}
 		RemoveAxiom  removeAxiom = new RemoveAxiom(theContext.getOntology(),axiom); 
 		try {
 			theContext.getManager().applyChange(removeAxiom);
-			theContext.getReasoner().unloadOntologies(theContext.getManager().getImports(theContext.getOntology()));
-			theContext.getReasoner().loadOntologies(theContext.getManager().getImports(theContext.getOntology()));
+			//theContext.getReasoner().unloadOntologies(theContext.getManager().getImports(theContext.getOntology()));
+			theContext.loadOntologies(theContext.getManager().getImports(theContext.getOntology()));
 		}
 		catch (OWLOntologyChangeException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		catch (OWLReasonerException e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}

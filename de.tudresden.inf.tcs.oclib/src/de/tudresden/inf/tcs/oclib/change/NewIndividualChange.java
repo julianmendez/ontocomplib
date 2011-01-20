@@ -1,15 +1,14 @@
 package de.tudresden.inf.tcs.oclib.change;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
-import org.semanticweb.owl.model.AddAxiom;
-import org.semanticweb.owl.model.OWLIndividual;
-import org.semanticweb.owl.model.OWLClass;
+import org.semanticweb.owlapi.model.AddAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import de.tudresden.inf.tcs.fcaapi.change.ContextChange;
 import de.tudresden.inf.tcs.oclib.IndividualContext;
-import de.tudresden.inf.tcs.oclib.change.AbstractContextModification;
 
 
 /*
@@ -35,16 +34,16 @@ import de.tudresden.inf.tcs.oclib.change.AbstractContextModification;
 
 public class NewIndividualChange extends AbstractContextModification {
 
-	private OWLIndividual object;
+	private OWLNamedIndividual object;
 	private HashSet<OWLClass> attributes;
 	
- 	public NewIndividualChange(IndividualContext c, AddAxiom ch, OWLIndividual o, Set<OWLClass> attrs) {
+ 	public NewIndividualChange(IndividualContext c, AddAxiom ch, OWLNamedIndividual o, Set<OWLClass> attrs) {
 		super(c,ch);
 		object = o;
 		attributes = new HashSet<OWLClass>(attrs);
 	}
 	
- 	public OWLIndividual getObject() {
+ 	public OWLNamedIndividual getObject() {
  		return object;
  	}
  	

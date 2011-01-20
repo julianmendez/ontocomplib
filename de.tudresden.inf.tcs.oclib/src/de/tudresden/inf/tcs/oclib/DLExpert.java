@@ -1,7 +1,7 @@
 package de.tudresden.inf.tcs.oclib;
 
-import org.semanticweb.owl.model.OWLClass;
-import org.semanticweb.owl.model.OWLIndividual;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import de.tudresden.inf.tcs.fcaapi.Expert;
 import de.tudresden.inf.tcs.fcaapi.FCAImplication;
@@ -27,7 +27,7 @@ import de.tudresden.inf.tcs.fcaapi.FCAImplication;
  */
 
 
-public interface DLExpert extends Expert<OWLClass,OWLIndividual,IndividualObject> {
+public interface DLExpert extends Expert<OWLClass,OWLNamedIndividual,IndividualObject> {
 
 	/**
 	 * Requests a counterexample from the expert. Called in the case where accepting an implication

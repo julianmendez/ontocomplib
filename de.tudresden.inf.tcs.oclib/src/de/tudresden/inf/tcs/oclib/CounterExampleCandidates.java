@@ -1,17 +1,14 @@
 package de.tudresden.inf.tcs.oclib;
 
-import java.util.Set;
-import java.util.HashSet;
 import java.util.ArrayList;
-
-import org.semanticweb.owl.model.OWLDataFactory;
-import org.semanticweb.owl.model.OWLClass;
-import org.semanticweb.owl.model.OWLDescription;
-import org.semanticweb.owl.model.OWLIndividual;
-// import org.semanticweb.owl.inference.OWLReasoner;
-// import org.semanticweb.owl.inference.OWLReasonerException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLIndividual;
 
 import de.tudresden.inf.tcs.fcaapi.FCAImplication;
 
@@ -83,8 +80,8 @@ public class CounterExampleCandidates extends ArrayList<IndividualObject> {
 	
 	public void setQuestion(FCAImplication<OWLClass> q) {
 		question = q;
-		OWLDescription desc1 = factory.getOWLObjectIntersectionOf(question.getConclusion());
-		Set<OWLDescription> tmp = new HashSet<OWLDescription>();
+		OWLClassExpression desc1 = factory.getOWLObjectIntersectionOf(question.getConclusion());
+		Set<OWLClassExpression> tmp = new HashSet<OWLClassExpression>();
 		tmp.add(desc1);
 		for (OWLClass cls : question.getPremise()) {
 			tmp.add(factory.getOWLObjectComplementOf(cls));
