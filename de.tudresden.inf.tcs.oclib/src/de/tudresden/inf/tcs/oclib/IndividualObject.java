@@ -40,11 +40,11 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 		return context;
 	}
 	
-	protected static boolean isSubClassOf(OWLReasoner reasoner, OWLClassExpression premise, OWLClassExpression conclusion) {
-		boolean ret = premise.equals(conclusion);
+	protected static boolean isSubClassOf(OWLReasoner reasoner, OWLClassExpression subClassExpr, OWLClassExpression superClassExpr) {
+		boolean ret = subClassExpr.isOWLNothing() || superClassExpr.isOWLThing() || subClassExpr.equals(superClassExpr);
 		if (!ret) {
 			OWLSubClassOfAxiom axiom = reasoner.getRootOntology().
-				getOWLOntologyManager().getOWLDataFactory().getOWLSubClassOfAxiom(premise, conclusion);
+				getOWLOntologyManager().getOWLDataFactory().getOWLSubClassOfAxiom(subClassExpr, superClassExpr);
 			ret = reasoner.isEntailed(axiom);
 		}
 		return ret;
