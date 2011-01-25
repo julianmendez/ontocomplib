@@ -506,6 +506,11 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 			if (getExpert().getReasonerID().equals(Constants.FACTPLUSPLUS_REASONER_ID)) {
 				// uncommenting this causes problems with the classification progress window
 				reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
+				reasoner.precomputeInferences(InferenceType.OBJECT_PROPERTY_HIERARCHY);
+				reasoner.precomputeInferences(InferenceType.DATA_PROPERTY_ASSERTIONS);
+				reasoner.precomputeInferences(InferenceType.CLASS_ASSERTIONS);
+				reasoner.precomputeInferences(InferenceType.OBJECT_PROPERTY_ASSERTIONS);
+				reasoner.precomputeInferences(InferenceType.SAME_INDIVIDUAL);
 			}
 	}
 	
