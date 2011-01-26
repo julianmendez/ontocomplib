@@ -10,9 +10,7 @@ import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChangeException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import de.tudresden.inf.tcs.fcaapi.exception.IllegalAttributeException;
@@ -22,8 +20,8 @@ import de.tudresden.inf.tcs.oclib.change.NewIndividualChange;
 
 public class ELIndividualContext extends IndividualContext {
 
-	public ELIndividualContext(OWLOntologyManager m, OWLReasoner r, OWLOntology o) {
-		super(m, r, o);
+	public ELIndividualContext(OWLReasoner r) {
+		super(r);
 		// TODO Auto-generated constructor stub
 	}
 	

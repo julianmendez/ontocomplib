@@ -58,10 +58,10 @@ import de.tudresden.inf.tcs.oclib.change.NewIndividualChange;
 
 public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividual,IndividualObject> {
 
-	/**
-	 * The ontology manager.
-	 */
-	private OWLOntologyManager manager;
+	//	/**
+	//	 * The ontology manager.
+	//	 */
+	//	private OWLOntologyManager manager;
 	
 	/**
 	 * The reasoner.
@@ -73,15 +73,15 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	//  */
 	// private String reasonerID;
 
-	/**
-	 * The data factory.
-	 */
-	private OWLDataFactory factory;
+	//	/**
+	//	 * The data factory.
+	//	 */
+	//	private OWLDataFactory factory;
 	
-	/**
-	 * The ontology.
-	 */
-	private OWLOntology ontology;
+	//	/**
+	//	 * The ontology.
+	//	 */
+	//	private OWLOntology ontology;
 	
 	//	/**
 	//	 * The set of ontologies
@@ -111,14 +111,8 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	/**
 	 * Creates an individual context.
 	 */
-	public IndividualContext(OWLOntologyManager m, OWLReasoner r, OWLOntology o) {
+	public IndividualContext(OWLReasoner r) {
 		reasoner = r;
-		manager = m;
-		factory = manager.getOWLDataFactory();
-		ontology = o;
-		// ontologies = manager.getImportsClosure(ontology);
-		// objects = new ListSet<OWLIndividual>();
-		// history= new HistoryManager(this);
 		history= new HistoryManager();
 		counterExampleCandidates = new CounterExampleCandidates(this);
 	}
@@ -157,7 +151,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	 * @return the data factory
 	 */
 	public OWLDataFactory getFactory() {
-		return factory;
+		return getManager().getOWLDataFactory();
 	}
 	
 	/**
@@ -165,7 +159,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	 * @return the ontology manager
 	 */
 	public OWLOntologyManager getManager() {
-		return manager;
+		return getOntology().getOWLOntologyManager();
 	}
 	
 	/**
@@ -173,7 +167,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	 * @return the ontology being completed
 	 */
 	public OWLOntology getOntology() {
-		return ontology;
+		return getReasoner().getRootOntology();
 	}
 	
 	/**
@@ -215,12 +209,12 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		if (!added) {
 			throw new IllegalAttributeException("Attribute " + attribute + " has already been added");
 		}
-			for (OWLNamedIndividual individual : reasoner.getInstances(attribute, false).getFlattened()) {
+			for (OWLNamedIndividual individual : getReasoner().getInstances(attribute, false).getFlattened()) {
 				IndividualObject o = new IndividualObject(individual,this);
 				o.getDescription().addAttribute(attribute);
 				addObject(o);
 			}
-			for (OWLNamedIndividual individual : reasoner.getInstances(factory.getOWLObjectComplementOf(attribute), false).getFlattened()) {
+			for (OWLNamedIndividual individual : getReasoner().getInstances(getFactory().getOWLObjectComplementOf(attribute), false).getFlattened()) {
 				IndividualObject o = new IndividualObject(individual,this);
 				o.getDescription().addNegatedAttribute(attribute);
 				addObject(o);
@@ -236,11 +230,11 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	 */
 	// @Override
 	public boolean addIndividualToOntology(OWLNamedIndividual object) {
-		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(factory.getOWLThing(), object);
-		AddAxiom  addAxiom = new AddAxiom(ontology,axiom); 
+		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(getFactory().getOWLThing(), object);
+		AddAxiom  addAxiom = new AddAxiom(getOntology(),axiom); 
 		Set<OWLClass> attrs = new HashSet<OWLClass>();
 		try {
-			manager.applyChange(addAxiom);
+			getManager().applyChange(addAxiom);
 			reClassifyOntology();
 			IndividualObject indObj = new IndividualObject(object,this);
 			indObj.updateDescription(Constants.AFTER_MODIFICATION);
@@ -250,7 +244,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		attrs.add(factory.getOWLThing());
+		attrs.add(getFactory().getOWLThing());
 		history.push(new NewIndividualChange(this,addAxiom,object,attrs));
 		return true;
 	}
@@ -265,10 +259,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	public boolean addIndividualToOntology(OWLNamedIndividual object, Set<OWLClass> attributes) {
 		// OWLObjectIntersectionOf description = toOWLDescription(attributes);
 		OWLClassExpression description = toOWLDescription(attributes);
-		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(description, object);
-		AddAxiom  addAxiom = new AddAxiom(ontology,axiom); 
+		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(description, object);
+		AddAxiom  addAxiom = new AddAxiom(getOntology(),axiom); 
 		try {
-			manager.applyChange(addAxiom);
+			getManager().applyChange(addAxiom);
 			reClassifyOntology();
 			IndividualObject indObj = new IndividualObject(object,this);
 			// for (OWLClass attribute : attributes) {
@@ -294,17 +288,17 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	// public IndexedSet<OWLIndividual> getObjects() {
 	// 	try {
 	// 		// TODO: Which method is better?
-	// 		// objects.addAll(reasoner.getIndividuals(factory.getOWLObjectUnionOf(getAttributes()), false));
+	// 		// objects.addAll(getReasoner().getIndividuals(getFactory().getOWLObjectUnionOf(getAttributes()), false));
 	// 		for (OWLClass attribute : getAttributes()) {
-	// 			objects.addAll(reasoner.getIndividuals(attribute, false));
+	// 			objects.addAll(getReasoner().getIndividuals(attribute, false));
 	// 		}
 	// 		// TODO: Which method is better?
-	// 		// objects.addAll(reasoner.getIndividuals(
-	// 		// 		factory.getOWLObjectComplementOf(factory.getOWLObjectIntersectionOf(getAttributes())),
+	// 		// objects.addAll(getReasoner().getIndividuals(
+	// 		// 		getFactory().getOWLObjectComplementOf(getFactory().getOWLObjectIntersectionOf(getAttributes())),
 	// 		// 		false));
 	// 		for (OWLClass attribute : getAttributes()) {
-	// 			objects.addAll(reasoner.getIndividuals(
-	// 					factory.getOWLObjectComplementOf(attribute), false));
+	// 			objects.addAll(getReasoner().getIndividuals(
+	// 					getFactory().getOWLObjectComplementOf(attribute), false));
 	// 		}
 	// 	}
 	// 	catch (OWLReasonerException e) {
@@ -360,7 +354,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		switch (updateType) {
 		case Constants.AFTER_MODIFICATION:
 				for (OWLClass attribute : getAttributes()) {
-					for (OWLNamedIndividual ind : reasoner.getInstances(attribute, false).getFlattened()) {
+					for (OWLNamedIndividual ind : getReasoner().getInstances(attribute, false).getFlattened()) {
 						if (!containsObject(ind)) {
 							IndividualObject indObj = new IndividualObject(ind,this);
 							// indObj.updateDescription();
@@ -368,7 +362,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 							addObject(indObj);
 						}
 					}
-					for (OWLNamedIndividual ind : reasoner.getInstances(getFactory().getOWLObjectComplementOf(attribute), false).getFlattened()) {
+					for (OWLNamedIndividual ind : getReasoner().getInstances(getFactory().getOWLObjectComplementOf(attribute), false).getFlattened()) {
 						if (!containsObject(ind)) {
 							IndividualObject indObj = new IndividualObject(ind,this);
 							// indObj.updateDescription();
@@ -406,10 +400,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	 * @return <code>true</code> if the assertion is successfull
 	 */
 	public boolean addAttributeToObject(OWLClass type,IndividualObject indObj) {
-		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(type, indObj.getIdentifier());
-		AddAxiom  addAxiom = new AddAxiom(ontology,axiom); 
+		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(type, indObj.getIdentifier());
+		AddAxiom  addAxiom = new AddAxiom(getOntology(),axiom); 
 		try {
-			manager.applyChange(addAxiom);
+			getManager().applyChange(addAxiom);
 			reClassifyOntology();
 			updateObjects(Constants.AFTER_MODIFICATION);
 			updateObjectDescriptions(Constants.AFTER_MODIFICATION);
@@ -430,10 +424,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	 * @return <code>true</code> if the assertion is successfull
 	 */
 	public boolean addNegatedAttributeToObject(OWLClass type,IndividualObject indObj) {
-		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(factory.getOWLObjectComplementOf(type), indObj.getIdentifier());
-		AddAxiom  addAxiom = new AddAxiom(ontology,axiom); 
+		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(getFactory().getOWLObjectComplementOf(type), indObj.getIdentifier());
+		AddAxiom  addAxiom = new AddAxiom(getOntology(),axiom); 
 		try {
-			manager.applyChange(addAxiom);
+			getManager().applyChange(addAxiom);
 			reClassifyOntology();
 			updateObjects(Constants.AFTER_MODIFICATION);
 			updateObjectDescriptions(Constants.AFTER_MODIFICATION);
@@ -503,12 +497,12 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		// this is probably slower, but to be on the safe side we do so
 
 		// this may cause problems with the classification progress window
-		reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
-		reasoner.precomputeInferences(InferenceType.OBJECT_PROPERTY_HIERARCHY);
-		reasoner.precomputeInferences(InferenceType.DATA_PROPERTY_ASSERTIONS);
-		reasoner.precomputeInferences(InferenceType.CLASS_ASSERTIONS);
-		reasoner.precomputeInferences(InferenceType.OBJECT_PROPERTY_ASSERTIONS);
-		reasoner.precomputeInferences(InferenceType.SAME_INDIVIDUAL);
+		getReasoner().precomputeInferences(InferenceType.CLASS_HIERARCHY);
+		getReasoner().precomputeInferences(InferenceType.OBJECT_PROPERTY_HIERARCHY);
+		getReasoner().precomputeInferences(InferenceType.DATA_PROPERTY_ASSERTIONS);
+		getReasoner().precomputeInferences(InferenceType.CLASS_ASSERTIONS);
+		getReasoner().precomputeInferences(InferenceType.OBJECT_PROPERTY_ASSERTIONS);
+		getReasoner().precomputeInferences(InferenceType.SAME_INDIVIDUAL);
 	}
 	
 	/**
@@ -517,7 +511,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	 */
 	public boolean isOntologyConsistent() {
 		boolean consistent = false;
-		consistent = reasoner.isConsistent();
+		consistent = getReasoner().isConsistent();
 		return consistent;
 	}
 	
@@ -532,7 +526,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	// 	boolean hasType = false;
 	// 	try {
 	// 		logger.debug("Asking the reasoner whether " + ind.getURI().getFragment() + " has type " + cls.getURI().getFragment());
-	// 		hasType = reasoner.hasType(ind, cls, false);
+	// 		hasType = getReasoner().hasType(ind, cls, false);
 	// 	}
 	// 	catch (OWLReasonerException e) {
 	// 		e.printStackTrace();
@@ -555,7 +549,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	// public boolean objectHasNegatedAttribute(OWLIndividual ind, OWLClass cls) {
 	// 	boolean hasType = false;
 	// 	try {
-	// 		hasType = reasoner.hasType(ind, factory.getOWLObjectComplementOf(cls), false);
+	// 		hasType = getReasoner().hasType(ind, getFactory().getOWLObjectComplementOf(cls), false);
 	// 	}
 	// 	catch (OWLReasonerException e) {
 	// 		e.printStackTrace();
@@ -579,10 +573,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	// 	Set<OWLClass> types = null; // OWLReasonerAdapter.flattenSetOfSets(subClsSets);
 	// 	try {
 	// 		for (OWLIndividual individual : getObjects()) {
-	// 			types = OWLReasonerAdapter.flattenSetOfSets(reasoner.getTypes(individual, false));
+	// 			types = OWLReasonerAdapter.flattenSetOfSets(getReasoner().getTypes(individual, false));
 	// 			if (types.containsAll(x)) {
 	// 				for (OWLClass attribute : getAttributes()) {
-	// 					if (reasoner.hasType(individual, factory.getOWLObjectComplementOf(attribute), false)) {
+	// 					if (getReasoner().hasType(individual, getFactory().getOWLObjectComplementOf(attribute), false)) {
 	// 						tmp.remove(attribute);
 	// 					}
 	// 				}
@@ -604,9 +598,9 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	//  */
 	// public boolean refutes(FCAImplication<OWLClass> question) {
 	// 	try {
-	// 		for (OWLIndividual ind : reasoner.getIndividuals(toOWLDescription(question.getPremise()),false)) {
+	// 		for (OWLIndividual ind : getReasoner().getIndividuals(toOWLDescription(question.getPremise()),false)) {
 	// 			for (OWLClass cls : question.getConclusion()) {
-	// 				if (reasoner.hasType(ind, factory.getOWLObjectComplementOf(cls), false)) {
+	// 				if (getReasoner().hasType(ind, getFactory().getOWLObjectComplementOf(cls), false)) {
 	// 					return true;
 	// 				}
 	// 			}
@@ -651,7 +645,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		if (x.isEmpty()) {
 			return getFactory().getOWLThing();
 		}
-		return factory.getOWLObjectIntersectionOf(x);
+		return getFactory().getOWLObjectIntersectionOf(x);
 	}
 	
 	public OWLSubClassOfAxiom toOWLSubClassAxiom(FCAImplication<OWLClass> imp) {
@@ -684,12 +678,12 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	protected boolean isSubClassOf(OWLClassExpression subClassExpr, OWLClassExpression superClassExpr) {
 		boolean ret = subClassExpr.isOWLNothing() || superClassExpr.isOWLThing() || subClassExpr.equals(superClassExpr);
 		if (!ret) {
-			OWLSubClassOfAxiom axiom = reasoner.getRootOntology().
+			OWLSubClassOfAxiom axiom = getReasoner().getRootOntology().
 				getOWLOntologyManager().getOWLDataFactory().getOWLSubClassOfAxiom(subClassExpr, superClassExpr);
-			if (!reasoner.isEntailmentCheckingSupported(axiom.getAxiomType())){
-				throw new RuntimeException("ERROR : Entailment not supported by reasoner '" + reasoner.getReasonerName() + "'.");
+			if (!getReasoner().isEntailmentCheckingSupported(axiom.getAxiomType())){
+				throw new RuntimeException("ERROR : Entailment not supported by reasoner '" + getReasoner().getReasonerName() + "'.");
 			}
-			ret = reasoner.isEntailed(axiom);
+			ret = getReasoner().isEntailed(axiom);
 		}
 		return ret;
 	}
@@ -700,13 +694,13 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	// 	implications.add(question);
 	// 	// also to the KB as a GCI
 	// 	// first create the GCI
-	// 	OWLSubClassAxiom axiom = factory.getOWLSubClassAxiom(toOWLDescription(question.getPremise()),
+	// 	OWLSubClassAxiom axiom = getFactory().getOWLSubClassAxiom(toOWLDescription(question.getPremise()),
 	// 			toOWLDescription(question.getConclusion()));
 	// 	// create a new AddAxiom object
-	// 	AddAxiom addAxiom = new AddAxiom(ontology,axiom);
+	// 	AddAxiom addAxiom = new AddAxiom(getOntology(),axiom);
 	// 	// apply the change
 	// 	try {
-	// 		manager.applyChange(addAxiom);
+	// 		getManager().applyChange(addAxiom);
 	// 		history.push(new NewSubClassAxiomChange(this,question,addAxiom));
 	// 		reClassifyOntology();
 	// 		premise = implications.nextClosure(premise);
@@ -755,7 +749,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	// @Override
 	// protected void explorationFinished() {
 	// 	// try {
-	// 	// 	manager.saveOntology(ontology);
+	// 	// 	getManager().saveOntology(getOntology());
 	// 	// }
 	// 	// catch (OWLOntologyStorageException e) {
 	// 	// 	e.printStackTrace();
@@ -790,19 +784,19 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		// apply the change
 		try {
 			getManager().applyChange(addAxiom);
-			// reasoner.unloadOntologies(ontologies);
-			// reasoner.loadOntologies(ontologies);
+			// getReasoner().unloadOntologies(ontologies);
+			// getReasoner().loadOntologies(ontologies);
 			// reClassifyOntology unloads/loads and classifies
 			reClassifyOntology();
-			if (reasoner.isConsistent()) {
+			if (getReasoner().isConsistent()) {
 				retCode = false;
 			}
 			else {
 				retCode = true;
 			}
 			getManager().applyChange(removeAxiom);
-			// reasoner.unloadOntologies(ontologies);
-			// reasoner.loadOntologies(ontologies);
+			// getReasoner().unloadOntologies(ontologies);
+			// getReasoner().loadOntologies(ontologies);
 			// reClassifyOntology unloads/loads and classifies
 			reClassifyOntology();
 		}
@@ -814,8 +808,8 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		// // if (!retCode) {
 		// 	try {
 		// 		getManager().applyChange(removeAxiom);
-		// 		reasoner.unloadOntologies(ontologies);
-		// 		reasoner.loadOntologies(ontologies);
+		// 		getReasoner().unloadOntologies(ontologies);
+		// 		getReasoner().loadOntologies(ontologies);
 		// 	}
 		// 	catch (OWLOntologyChangeException x) {
 		// 		x.printStackTrace();
