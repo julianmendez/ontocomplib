@@ -7,8 +7,6 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import de.tudresden.inf.tcs.fcalib.PartialObject;
 
@@ -40,21 +38,11 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 		return context;
 	}
 	
-	protected static boolean isSubClassOf(OWLReasoner reasoner, OWLClassExpression subClassExpr, OWLClassExpression superClassExpr) {
-		boolean ret = subClassExpr.isOWLNothing() || superClassExpr.isOWLThing() || subClassExpr.equals(superClassExpr);
-		if (!ret) {
-			OWLSubClassOfAxiom axiom = reasoner.getRootOntology().
-				getOWLOntologyManager().getOWLDataFactory().getOWLSubClassOfAxiom(subClassExpr, superClassExpr);
-			ret = reasoner.isEntailed(axiom);
-		}
-		return ret;
-	}
-
-	protected static boolean hasType(OWLReasoner reasoner, OWLClassExpression type, OWLNamedIndividual individual) {
+	private boolean hasType(OWLClassExpression type, OWLNamedIndividual individual) {
 		boolean ret = false;
-		Set<OWLClassAssertionAxiom> set = reasoner.getRootOntology().getClassAssertionAxioms(individual);
+		Set<OWLClassAssertionAxiom> set = getContext().getReasoner().getRootOntology().getClassAssertionAxioms(individual);
 		for (OWLClassAssertionAxiom axiom : set) {
-			ret = ret || isSubClassOf(reasoner, axiom.getClassExpression(), type);
+			ret = ret || getContext().isSubClassOf(axiom.getClassExpression(), type);
 		}
 		return ret;
 	}
@@ -66,14 +54,14 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 			for (OWLClass type : getContext().getAttributes()) {
 				if (!getDescription().containsAttribute(type) && !getDescription().containsNegatedAttribute(type)) {
 						// logger.debug("Asking the reasoner whether " + getName() + " has type " + type.getIRI().getFragment());
-						if (hasType(getContext().getReasoner(), type, getIdentifier())) {
+						if (hasType(type, getIdentifier())) {
 						    // logger.info(getName() + " has type " + type.getIRI().getFragment());
 							getDescription().addAttribute(type);
 						}
 						else {
 							OWLClassExpression complement = getContext().getFactory().getOWLObjectComplementOf(type);
 							// logger.debug("Asking the reasoner whether " + getName() + " has complement of type " + type.getIRI().getFragment());
-							if (hasType(getContext().getReasoner(), complement, getIdentifier())) {
+							if (hasType(complement, getIdentifier())) {
 							    // logger.debug(getName() + " has complement of type " + type.getIRI().getFragment());
 								getDescription().addNegatedAttribute(type);
 							}
@@ -85,7 +73,7 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 			// if it is after an undo, then check only pluses and minuses. questions marks have not changed.
 				Set<OWLClass> toBeRemoved = new HashSet<OWLClass>();
 				for (OWLClass attribute : getDescription().getAttributes()) {
-					if (!hasType(getContext().getReasoner(), attribute, getIdentifier())) {
+					if (!hasType(attribute, getIdentifier())) {
 						// getDescription().getAttributes().remove(attribute);
 						toBeRemoved.add(attribute);
 					}
@@ -95,7 +83,7 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 				toBeRemoved.clear();
 				for (OWLClass attribute : getDescription().getNegatedAttributes()) {
 					OWLClassExpression complement = getContext().getFactory().getOWLObjectComplementOf(attribute);
-					if (!hasType(getContext().getReasoner(), complement, getIdentifier())) {
+					if (!hasType(complement, getIdentifier())) {
 						// getDescription().getNegatedAttributes().remove(attribute);
 						toBeRemoved.add(attribute);
 					}

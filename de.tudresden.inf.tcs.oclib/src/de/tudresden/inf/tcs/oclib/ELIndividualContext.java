@@ -13,7 +13,6 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChangeException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import de.tudresden.inf.tcs.fcaapi.exception.IllegalAttributeException;
@@ -197,17 +196,6 @@ public class ELIndividualContext extends IndividualContext {
 			}
 			break;
 		}
-	}
-	
-	/**
-	 * Reclassifies the ontology.
-	 */
-	@Override
-	public void reClassifyOntology() {
-		// TODO: Is there a more efficient way to do this?
-		// Julian tells to use clearOntology() and loadOntologies()
-		loadOntologies(getManager().getImportsClosure(getOntology()));
-		getReasoner().precomputeInferences(InferenceType.CLASS_HIERARCHY); 
 	}
 
 }

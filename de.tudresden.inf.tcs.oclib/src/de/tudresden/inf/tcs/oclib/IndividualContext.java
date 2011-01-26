@@ -12,7 +12,6 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChangeException;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.RemoveAxiom;
@@ -84,10 +83,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	 */
 	private OWLOntology ontology;
 	
-	/**
-	 * The set of ontologies
-	 */
-	private Set<OWLOntology> ontologies = null;
+	//	/**
+	//	 * The set of ontologies
+	//	 */
+	//	private Set<OWLOntology> ontologies = null;
 	
 	// /**
 	//  * The 'local' set of objects.
@@ -117,7 +116,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		manager = m;
 		factory = manager.getOWLDataFactory();
 		ontology = o;
-		ontologies = manager.getImportsClosure(ontology);
+		// ontologies = manager.getImportsClosure(ontology);
 		// objects = new ListSet<OWLIndividual>();
 		// history= new HistoryManager(this);
 		history= new HistoryManager();
@@ -500,18 +499,16 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	 */
 	public void reClassifyOntology() {
 		// TODO: Is there a more efficient way to do this?
-			// Dmitry says for FaCT++ it is the safest to unload/load and still call classify()
-			// this is probably slower, but to be on the safe side we do so
-			loadOntologies(ontologies);
-			if (getExpert().getReasonerID().equals(Constants.FACTPLUSPLUS_REASONER_ID)) {
-				// uncommenting this causes problems with the classification progress window
-				reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
-				reasoner.precomputeInferences(InferenceType.OBJECT_PROPERTY_HIERARCHY);
-				reasoner.precomputeInferences(InferenceType.DATA_PROPERTY_ASSERTIONS);
-				reasoner.precomputeInferences(InferenceType.CLASS_ASSERTIONS);
-				reasoner.precomputeInferences(InferenceType.OBJECT_PROPERTY_ASSERTIONS);
-				reasoner.precomputeInferences(InferenceType.SAME_INDIVIDUAL);
-			}
+		// Dmitry says for FaCT++ it is the safest to unload/load and still call classify()
+		// this is probably slower, but to be on the safe side we do so
+
+		// this may cause problems with the classification progress window
+		reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
+		reasoner.precomputeInferences(InferenceType.OBJECT_PROPERTY_HIERARCHY);
+		reasoner.precomputeInferences(InferenceType.DATA_PROPERTY_ASSERTIONS);
+		reasoner.precomputeInferences(InferenceType.CLASS_ASSERTIONS);
+		reasoner.precomputeInferences(InferenceType.OBJECT_PROPERTY_ASSERTIONS);
+		reasoner.precomputeInferences(InferenceType.SAME_INDIVIDUAL);
 	}
 	
 	/**
@@ -673,9 +670,28 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	@Override
 	protected boolean followsFromBackgroundKnowledge(FCAImplication<OWLClass> implication) {
 		boolean retCode = false;
-		retCode = IndividualObject.isSubClassOf(reasoner, 
-				toOWLDescription(implication.getPremise()), toOWLDescription(implication.getConclusion()));
+		retCode = isSubClassOf(toOWLDescription(implication.getPremise()), toOWLDescription(implication.getConclusion()));
 		return retCode;
+	}
+	
+	/**
+	 * Checks whether a class expression is a subclass of another class expression.
+	 * @param subClassExpr class expression on the left-hand side 
+	 * @param superClassExpr class expression on the right-hand side
+	 * @return <code>true</code> if the class expression on the left-hand side is a subclass of the class expression
+	 * on the right-hand side, <code>false</code> otherwise
+	 */
+	protected boolean isSubClassOf(OWLClassExpression subClassExpr, OWLClassExpression superClassExpr) {
+		boolean ret = subClassExpr.isOWLNothing() || superClassExpr.isOWLThing() || subClassExpr.equals(superClassExpr);
+		if (!ret) {
+			OWLSubClassOfAxiom axiom = reasoner.getRootOntology().
+				getOWLOntologyManager().getOWLDataFactory().getOWLSubClassOfAxiom(subClassExpr, superClassExpr);
+			if (!reasoner.isEntailmentCheckingSupported(axiom.getAxiomType())){
+				throw new RuntimeException("ERROR : Entailment not supported by reasoner '" + reasoner.getReasonerName() + "'.");
+			}
+			ret = reasoner.isEntailed(axiom);
+		}
+		return ret;
 	}
 	
 	// @Override
@@ -911,18 +927,6 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 			// stop the exploration
 			explorationFinished();
 			logger.debug("objects: " + getObjects());
-		}
-	}
-
-	public void loadOntologies(Set<OWLOntology> ontologies) {
-		reasoner.getRootOntology().getOWLOntologyManager().clearIRIMappers();
-		try {
-			for (OWLOntology ontology : ontologies) {
-					reasoner.getRootOntology().getOWLOntologyManager().loadOntologyFromOntologyDocument(
-							ontology.getOntologyID().getDefaultDocumentIRI());
-			}
-		} catch (OWLOntologyCreationException e) {
-			throw new RuntimeException(e);
 		}
 	}
 

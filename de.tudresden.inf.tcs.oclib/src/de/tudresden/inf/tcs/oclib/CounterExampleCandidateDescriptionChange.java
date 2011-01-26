@@ -68,8 +68,6 @@ public class CounterExampleCandidateDescriptionChange {
 		RemoveAxiom  removeAxiom = new RemoveAxiom(theContext.getOntology(),axiom); 
 		try {
 			theContext.getManager().applyChange(removeAxiom);
-			//theContext.getReasoner().unloadOntologies(theContext.getManager().getImports(theContext.getOntology()));
-			theContext.loadOntologies(theContext.getManager().getImports(theContext.getOntology()));
 		}
 		catch (OWLOntologyChangeException e) {
 			e.printStackTrace();
