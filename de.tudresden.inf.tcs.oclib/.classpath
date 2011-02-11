@@ -5,6 +5,6 @@
 	<classpathentry kind="lib" path="lib/de.tudresden.inf.tcs.fcaapi/jars/fcaapi-0.10.0.jar"/>
 	<classpathentry kind="lib" path="lib/de.tudresden.inf.tcs.fcalib/jars/fcalib-0.10.0.jar"/>
 	<classpathentry kind="lib" path="lib/log4j/jars/log4j-1.2.16.jar"/>
-	<classpathentry kind="lib" path="lib/org.semanticweb.owlapi/jars/owlapi-bin-3.2.0.jar" sourcepath="lib/org.semanticweb.owlapi/jars/owlapi-src-3.2.0.jar"/>
+	<classpathentry kind="lib" path="lib/org.semanticweb.owlapi/jars/owlapi-bin-3.2.1.jar" sourcepath="lib/org.semanticweb.owlapi/jars/owlapi-src-3.2.1.jar"/>
 	<classpathentry kind="output" path="build/bin"/>
 </classpath>
