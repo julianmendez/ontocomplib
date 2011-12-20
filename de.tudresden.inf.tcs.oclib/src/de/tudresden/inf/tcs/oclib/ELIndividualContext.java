@@ -24,7 +24,7 @@ public class ELIndividualContext extends IndividualContext {
 		super(r);
 		// TODO Auto-generated constructor stub
 	}
-	
+
 	/** 
 	 * Adds a given attribute to the attributes of this context, updates the 'local' set of objects.
 	 * @param attribute the attribute to be added
@@ -47,7 +47,7 @@ public class ELIndividualContext extends IndividualContext {
 			// the CEL reasoner is being used
 			// add new concept name for the complement of the added attribute
 			OWLClass complementOfAttribute = getFactory().getOWLClass(IRI.create(getOntology().getOntologyID().getOntologyIRI() + 
-					Constants.EL_COMPLEMENT_CONCEPT_PREFIX +  attribute));
+					Constants.EL_COMPLEMENT_CONCEPT_PREFIX + attribute.getIRI().getFragment()));
 			// make them disjoint
 			HashSet<OWLClass> disjoint = new HashSet<OWLClass>();
 			disjoint.add(attribute);
@@ -77,7 +77,8 @@ public class ELIndividualContext extends IndividualContext {
 	@Override
 	public boolean addNegatedAttributeToObject(OWLClass type,IndividualObject indObj) {
 		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom( 
-				getFactory().getOWLClass(IRI.create(getOntology().getOntologyID().getOntologyIRI() + Constants.EL_COMPLEMENT_CONCEPT_PREFIX + type)),
+				getFactory().getOWLClass(IRI.create(getOntology().getOntologyID().getOntologyIRI() 
+						+ Constants.EL_COMPLEMENT_CONCEPT_PREFIX + type.getIRI().getFragment())),
 				indObj.getIdentifier());
 		AddAxiom  addAxiom = new AddAxiom(getOntology(),axiom); 
 		try {
@@ -165,7 +166,8 @@ public class ELIndividualContext extends IndividualContext {
 					}
 					for (OWLNamedIndividual ind : getReasoner().getInstances(
 							getFactory().getOWLClass(
-									IRI.create(getOntology().getOntologyID().getOntologyIRI() + Constants.EL_COMPLEMENT_CONCEPT_PREFIX + attribute)),
+									IRI.create(getOntology().getOntologyID().getOntologyIRI() 
+											+ Constants.EL_COMPLEMENT_CONCEPT_PREFIX + attribute.getIRI().getFragment())),
 							false).getFlattened()) {
 						if (!containsObject(ind)) {
 							ELIndividualObject indObj = new ELIndividualObject(ind,this);
