@@ -98,63 +98,6 @@ public class ELIndividualContext extends IndividualContext {
 		getHistory().push(new ClassAssertionChange(this,addAxiom,indObj.getIdentifier(),type,true));
 		return true;
 	}
-	
-	/**
-	 * Adds a given individual to the ontology as an instance of <code>Thing</code>
-	 * @param object the given object to be added
-	 * @return <code>true</code> if the object is successfully added
-	 */
-	@Override
-	public boolean addIndividualToOntology(OWLNamedIndividual object) {
-		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(getFactory().getOWLThing(), object);
-		AddAxiom  addAxiom = new AddAxiom(getOntology(),axiom); 
-		Set<OWLClass> attrs = new HashSet<OWLClass>();
-		try {
-			getManager().applyChange(addAxiom);
-			reClassifyOntology();
-			IndividualObject indObj = createIndividualObject(object);
-			indObj.updateDescription(Constants.AFTER_MODIFICATION);
-			addObject(indObj);
-		}
-		catch (OWLOntologyChangeException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		attrs.add(getFactory().getOWLThing());
-		getHistory().push(new NewIndividualChange(this,addAxiom,object,attrs));
-		return true;
-	}
-	
-	/**
-	 * Adds a given individual to the ontology as an instance of the conjunction of the 
-	 * given set of classes
-	 * @param object the individual to be added
-	 * @param attributes the set of classes
-	 * @return <code>true</code> if the individual is successfully added
-	 */
-	public boolean addIndividualToOntology(OWLNamedIndividual object, Set<OWLClass> attributes) {
-		// OWLObjectIntersectionOf description = toOWLDescription(attributes);
-		OWLClassExpression description = toOWLDescription(attributes);
-		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(description, object);
-		AddAxiom  addAxiom = new AddAxiom(getOntology(),axiom); 
-		try {
-			getManager().applyChange(addAxiom);
-			reClassifyOntology();
-			IndividualObject indObj = createIndividualObject(object);
-			// for (OWLClass attribute : attributes) {
-			// 	indObj.getDescription().addAttribute(attribute);
-			// }
-			indObj.getDescription().addAttributes(attributes);
-			indObj.updateDescription(Constants.AFTER_MODIFICATION);
-			addObject(indObj);
-		}
-		catch (OWLOntologyChangeException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		getHistory().push(new NewIndividualChange(this,addAxiom,object,attributes));
-		return true;
-	}
 
 	@Override
 	public void updateObjects(int updateType) {
@@ -185,7 +128,7 @@ public class ELIndividualContext extends IndividualContext {
 			break;
 		case Constants.AFTER_UNDO:
 			try {
-				HashSet<IndividualObject> toBeRemoved = new HashSet<IndividualObject>();
+				Set<IndividualObject> toBeRemoved = new HashSet<IndividualObject>();
 				for (IndividualObject object : getObjects()) {
 					if (!getOntology().containsEntityInSignature(object.getIdentifier())) {
 						toBeRemoved.add(object);
