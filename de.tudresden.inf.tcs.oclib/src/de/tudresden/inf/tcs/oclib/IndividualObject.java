@@ -38,13 +38,17 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 		return context;
 	}
 	
-	private boolean hasType(OWLClassExpression type, OWLNamedIndividual individual) {
+	public boolean hasType(OWLClassExpression type, OWLNamedIndividual individual) {
 		boolean ret = false;
 		Set<OWLClassAssertionAxiom> set = getContext().getReasoner().getRootOntology().getClassAssertionAxioms(individual);
 		for (OWLClassAssertionAxiom axiom : set) {
 			ret = ret || getContext().isSubClassOf(axiom.getClassExpression(), type);
 		}
 		return ret;
+	}
+	
+	public OWLClassExpression getComplement(OWLClass attribute) {
+		return getContext().getFactory().getOWLObjectComplementOf(attribute);
 	}
 
 	public void updateDescription(int updateType) {
@@ -59,7 +63,7 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 							getDescription().addAttribute(type);
 						}
 						else {
-							OWLClassExpression complement = getContext().getFactory().getOWLObjectComplementOf(type);
+							OWLClassExpression complement = getComplement(type);
 							// logger.debug("Asking the reasoner whether " + getName() + " has complement of type " + type.getIRI().getFragment());
 							if (hasType(complement, getIdentifier())) {
 							    // logger.debug(getName() + " has complement of type " + type.getIRI().getFragment());
@@ -82,7 +86,7 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 				
 				toBeRemoved.clear();
 				for (OWLClass attribute : getDescription().getNegatedAttributes()) {
-					OWLClassExpression complement = getContext().getFactory().getOWLObjectComplementOf(attribute);
+					OWLClassExpression complement = getComplement(attribute);
 					if (!hasType(complement, getIdentifier())) {
 						// getDescription().getNegatedAttributes().remove(attribute);
 						toBeRemoved.add(attribute);

@@ -23,6 +23,7 @@ public class ELIndividualContext extends IndividualContext {
 		// TODO Auto-generated constructor stub
 	}
 
+	@Override
 	public IndividualObject createIndividualObject(OWLNamedIndividual individual) {
 		return new ELIndividualObject(individual, this);
 	}
