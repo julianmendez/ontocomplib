@@ -96,4 +96,5 @@ public class IndividualObject extends PartialObject<OWLClass,OWLNamedIndividual>
 			break;
 		}
 	}
+
 }
