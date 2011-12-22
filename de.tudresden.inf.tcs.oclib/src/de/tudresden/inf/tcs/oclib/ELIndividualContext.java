@@ -7,7 +7,6 @@ import org.semanticweb.owlapi.model.AddAxiom;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyChangeException;
@@ -16,7 +15,6 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import de.tudresden.inf.tcs.fcaapi.exception.IllegalAttributeException;
 import de.tudresden.inf.tcs.fcaapi.exception.IllegalObjectException;
 import de.tudresden.inf.tcs.oclib.change.ClassAssertionChange;
-import de.tudresden.inf.tcs.oclib.change.NewIndividualChange;
 
 public class ELIndividualContext extends IndividualContext {
 
@@ -28,7 +26,7 @@ public class ELIndividualContext extends IndividualContext {
 	public IndividualObject createIndividualObject(OWLNamedIndividual individual) {
 		return new ELIndividualObject(individual, this);
 	}
-	
+
 	/** 
 	 * Adds a given attribute to the attributes of this context, updates the 'local' set of objects.
 	 * @param attribute the attribute to be added
@@ -71,7 +69,7 @@ public class ELIndividualContext extends IndividualContext {
 		}
 		return added;
 	}
-	
+
 	/**
 	 * Asserts that the given individual is an instance of the complement of the given type.
 	 * @param type the given type
