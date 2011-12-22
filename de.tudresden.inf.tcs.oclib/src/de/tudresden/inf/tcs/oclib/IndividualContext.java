@@ -186,6 +186,10 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		return counterExampleCandidates;
 	}
 	
+	public IndividualObject createIndividualObject(OWLNamedIndividual individual) {
+		return new IndividualObject(individual, this);
+	}
+	
 	/** 
 	 * Adds a given attribute to the attributes of this context, updates the 'local' set of objects.
 	 * @param attribute the attribute to be added
@@ -210,12 +214,12 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 			throw new IllegalAttributeException("Attribute " + attribute + " has already been added");
 		}
 			for (OWLNamedIndividual individual : getReasoner().getInstances(attribute, false).getFlattened()) {
-				IndividualObject o = new IndividualObject(individual,this);
+				IndividualObject o = createIndividualObject(individual);
 				o.getDescription().addAttribute(attribute);
 				addObject(o);
 			}
 			for (OWLNamedIndividual individual : getReasoner().getInstances(getFactory().getOWLObjectComplementOf(attribute), false).getFlattened()) {
-				IndividualObject o = new IndividualObject(individual,this);
+				IndividualObject o = createIndividualObject(individual);
 				o.getDescription().addNegatedAttribute(attribute);
 				addObject(o);
 			}
@@ -236,7 +240,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		try {
 			getManager().applyChange(addAxiom);
 			reClassifyOntology();
-			IndividualObject indObj = new IndividualObject(object,this);
+			IndividualObject indObj = createIndividualObject(object);
 			indObj.updateDescription(Constants.AFTER_MODIFICATION);
 			addObject(indObj);
 		}
@@ -264,7 +268,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		try {
 			getManager().applyChange(addAxiom);
 			reClassifyOntology();
-			IndividualObject indObj = new IndividualObject(object,this);
+			IndividualObject indObj = createIndividualObject(object);
 			// for (OWLClass attribute : attributes) {
 			// 	indObj.getDescription().addAttribute(attribute);
 			// }
@@ -356,7 +360,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 				for (OWLClass attribute : getAttributes()) {
 					for (OWLNamedIndividual ind : getReasoner().getInstances(attribute, false).getFlattened()) {
 						if (!containsObject(ind)) {
-							IndividualObject indObj = new IndividualObject(ind,this);
+							IndividualObject indObj = createIndividualObject(ind);
 							// indObj.updateDescription();
 							indObj.getDescription().addAttribute(attribute);
 							addObject(indObj);
@@ -364,7 +368,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 					}
 					for (OWLNamedIndividual ind : getReasoner().getInstances(getFactory().getOWLObjectComplementOf(attribute), false).getFlattened()) {
 						if (!containsObject(ind)) {
-							IndividualObject indObj = new IndividualObject(ind,this);
+							IndividualObject indObj = createIndividualObject(ind);
 							// indObj.updateDescription();
 							indObj.getDescription().addNegatedAttribute(attribute);
 							addObject(indObj);

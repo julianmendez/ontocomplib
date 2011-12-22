@@ -25,6 +25,10 @@ public class ELIndividualContext extends IndividualContext {
 		// TODO Auto-generated constructor stub
 	}
 
+	public IndividualObject createIndividualObject(OWLNamedIndividual individual) {
+		return new ELIndividualObject(individual, this);
+	}
+	
 	/** 
 	 * Adds a given attribute to the attributes of this context, updates the 'local' set of objects.
 	 * @param attribute the attribute to be added
@@ -40,7 +44,7 @@ public class ELIndividualContext extends IndividualContext {
 		}
 		try {
 			for (OWLNamedIndividual individual : getReasoner().getInstances(attribute, false).getFlattened()) {
-				IndividualObject o = new ELIndividualObject(individual,this);
+				IndividualObject o = createIndividualObject(individual);
 				o.getDescription().addAttribute(attribute);
 				addObject(o);
 			}
@@ -108,7 +112,7 @@ public class ELIndividualContext extends IndividualContext {
 		try {
 			getManager().applyChange(addAxiom);
 			reClassifyOntology();
-			IndividualObject indObj = new ELIndividualObject(object,this);
+			IndividualObject indObj = createIndividualObject(object);
 			indObj.updateDescription(Constants.AFTER_MODIFICATION);
 			addObject(indObj);
 		}
@@ -136,7 +140,7 @@ public class ELIndividualContext extends IndividualContext {
 		try {
 			getManager().applyChange(addAxiom);
 			reClassifyOntology();
-			IndividualObject indObj = new ELIndividualObject(object,this);
+			IndividualObject indObj = createIndividualObject(object);
 			// for (OWLClass attribute : attributes) {
 			// 	indObj.getDescription().addAttribute(attribute);
 			// }
@@ -159,7 +163,7 @@ public class ELIndividualContext extends IndividualContext {
 				for (OWLClass attribute : getAttributes()) {
 					for (OWLNamedIndividual ind : getReasoner().getInstances(attribute, false).getFlattened()) {
 						if (!containsObject(ind)) {
-							IndividualObject indObj = new ELIndividualObject(ind,this);
+							IndividualObject indObj = createIndividualObject(ind);
 							// indObj.updateDescription();
 							indObj.getDescription().addAttribute(attribute);
 							addObject(indObj);
@@ -171,7 +175,7 @@ public class ELIndividualContext extends IndividualContext {
 											+ Constants.EL_COMPLEMENT_CONCEPT_PREFIX + attribute.getIRI().getFragment())),
 							false).getFlattened()) {
 						if (!containsObject(ind)) {
-							IndividualObject indObj = new ELIndividualObject(ind,this);
+							IndividualObject indObj = createIndividualObject(ind);
 							// indObj.updateDescription();
 							indObj.getDescription().addNegatedAttribute(attribute);
 							addObject(indObj);
