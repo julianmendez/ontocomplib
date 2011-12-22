@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.semanticweb.owlapi.model.AddAxiom;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
@@ -49,8 +48,7 @@ public class ELIndividualContext extends IndividualContext {
 			}
 			// the CEL reasoner is being used
 			// add new concept name for the complement of the added attribute
-			OWLClass complementOfAttribute = getFactory().getOWLClass(IRI.create(getOntology().getOntologyID().getOntologyIRI() + 
-					Constants.EL_COMPLEMENT_CONCEPT_PREFIX + attribute.getIRI().getFragment()));
+			OWLClass complementOfAttribute = ELIndividualObject.getComplement(getOntology(), attribute);
 			// make them disjoint
 			Set<OWLClass> disjoint = new HashSet<OWLClass>();
 			disjoint.add(attribute);
@@ -79,9 +77,8 @@ public class ELIndividualContext extends IndividualContext {
 	 */
 	@Override
 	public boolean addNegatedAttributeToObject(OWLClass type,IndividualObject indObj) {
-		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom( 
-				getFactory().getOWLClass(IRI.create(getOntology().getOntologyID().getOntologyIRI() 
-						+ Constants.EL_COMPLEMENT_CONCEPT_PREFIX + type.getIRI().getFragment())),
+		OWLClassAssertionAxiom axiom = getFactory().getOWLClassAssertionAxiom(
+				ELIndividualObject.getComplement(getOntology(), type),
 				indObj.getIdentifier());
 		AddAxiom  addAxiom = new AddAxiom(getOntology(),axiom); 
 		try {
@@ -112,9 +109,7 @@ public class ELIndividualContext extends IndividualContext {
 						}
 					}
 					for (OWLNamedIndividual ind : getReasoner().getInstances(
-							getFactory().getOWLClass(
-									IRI.create(getOntology().getOntologyID().getOntologyIRI() 
-											+ Constants.EL_COMPLEMENT_CONCEPT_PREFIX + attribute.getIRI().getFragment())),
+							ELIndividualObject.getComplement(getOntology(), attribute),
 							false).getFlattened()) {
 						if (!containsObject(ind)) {
 							IndividualObject indObj = createIndividualObject(ind);
