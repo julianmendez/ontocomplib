@@ -245,7 +245,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 			System.exit(-1);
 		}
 		attrs.add(getFactory().getOWLThing());
-		history.push(new NewIndividualChange(this,addAxiom,object,attrs));
+		getHistory().push(new NewIndividualChange(this,addAxiom,object,attrs));
 		return true;
 	}
 	
@@ -276,7 +276,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		history.push(new NewIndividualChange(this,addAxiom,object,attributes));
+		getHistory().push(new NewIndividualChange(this,addAxiom,object,attributes));
 		return true;
 	}
 
@@ -412,7 +412,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		history.push(new ClassAssertionChange(this,addAxiom,indObj.getIdentifier(),type,false));
+		getHistory().push(new ClassAssertionChange(this,addAxiom,indObj.getIdentifier(),type,false));
 		return true;
 	}
 	
@@ -436,7 +436,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		history.push(new ClassAssertionChange(this,addAxiom,indObj.getIdentifier(),type,true));
+		getHistory().push(new ClassAssertionChange(this,addAxiom,indObj.getIdentifier(),type,true));
 		return true;
 	}
 	
@@ -701,7 +701,7 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 	// 	// apply the change
 	// 	try {
 	// 		getManager().applyChange(addAxiom);
-	// 		history.push(new NewSubClassAxiomChange(this,question,addAxiom));
+	// 		getHistory().push(new NewSubClassAxiomChange(this,question,addAxiom));
 	// 		reClassifyOntology();
 	// 		premise = implications.nextClosure(premise);
 	// 		continueExploration();

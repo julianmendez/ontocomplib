@@ -40,7 +40,7 @@ public class ELIndividualContext extends IndividualContext {
 		}
 		try {
 			for (OWLNamedIndividual individual : getReasoner().getInstances(attribute, false).getFlattened()) {
-				ELIndividualObject o = new ELIndividualObject(individual,this);
+				IndividualObject o = new ELIndividualObject(individual,this);
 				o.getDescription().addAttribute(attribute);
 				addObject(o);
 			}
@@ -49,7 +49,7 @@ public class ELIndividualContext extends IndividualContext {
 			OWLClass complementOfAttribute = getFactory().getOWLClass(IRI.create(getOntology().getOntologyID().getOntologyIRI() + 
 					Constants.EL_COMPLEMENT_CONCEPT_PREFIX + attribute.getIRI().getFragment()));
 			// make them disjoint
-			HashSet<OWLClass> disjoint = new HashSet<OWLClass>();
+			Set<OWLClass> disjoint = new HashSet<OWLClass>();
 			disjoint.add(attribute);
 			disjoint.add(complementOfAttribute);
 			OWLDisjointClassesAxiom disjointnessAxiom = getFactory().getOWLDisjointClassesAxiom(disjoint);
@@ -108,7 +108,7 @@ public class ELIndividualContext extends IndividualContext {
 		try {
 			getManager().applyChange(addAxiom);
 			reClassifyOntology();
-			ELIndividualObject indObj = new ELIndividualObject(object,this);
+			IndividualObject indObj = new ELIndividualObject(object,this);
 			indObj.updateDescription(Constants.AFTER_MODIFICATION);
 			addObject(indObj);
 		}
@@ -136,7 +136,7 @@ public class ELIndividualContext extends IndividualContext {
 		try {
 			getManager().applyChange(addAxiom);
 			reClassifyOntology();
-			ELIndividualObject indObj = new ELIndividualObject(object,this);
+			IndividualObject indObj = new ELIndividualObject(object,this);
 			// for (OWLClass attribute : attributes) {
 			// 	indObj.getDescription().addAttribute(attribute);
 			// }
@@ -151,6 +151,7 @@ public class ELIndividualContext extends IndividualContext {
 		getHistory().push(new NewIndividualChange(this,addAxiom,object,attributes));
 		return true;
 	}
+
 	@Override
 	public void updateObjects(int updateType) {
 		switch (updateType) {
@@ -158,7 +159,7 @@ public class ELIndividualContext extends IndividualContext {
 				for (OWLClass attribute : getAttributes()) {
 					for (OWLNamedIndividual ind : getReasoner().getInstances(attribute, false).getFlattened()) {
 						if (!containsObject(ind)) {
-							ELIndividualObject indObj = new ELIndividualObject(ind,this);
+							IndividualObject indObj = new ELIndividualObject(ind,this);
 							// indObj.updateDescription();
 							indObj.getDescription().addAttribute(attribute);
 							addObject(indObj);
@@ -170,7 +171,7 @@ public class ELIndividualContext extends IndividualContext {
 											+ Constants.EL_COMPLEMENT_CONCEPT_PREFIX + attribute.getIRI().getFragment())),
 							false).getFlattened()) {
 						if (!containsObject(ind)) {
-							ELIndividualObject indObj = new ELIndividualObject(ind,this);
+							IndividualObject indObj = new ELIndividualObject(ind,this);
 							// indObj.updateDescription();
 							indObj.getDescription().addNegatedAttribute(attribute);
 							addObject(indObj);
