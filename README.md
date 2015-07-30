@@ -1,6 +1,9 @@
-# OntoComPlib
+# [OntoComPlib](http://julianmendez.github.io/ontocomplib/)
 
 *An Ontology Completion Library*
+
+[![Build Status](https://travis-ci.org/julianmendez/ontocomplib.png?branch=master)](https://travis-ci.org/julianmendez/ontocomplib)
+
 
 **OntoComPlib** is a library for completing OWL ontologies. It is mainly developed for the ontology completion tool OntoComP, which is a plugin for the [Protégé 4](http://protege.stanford.edu/) ontology editor. **OntoComPlib** is an extension of the Formal Concept Analysis (FCA) library FCAlib. It implements the ontology completion algorithm presented in [1]. It communicates with the reasoner over the [OWL API](http://owlcs.github.io/owlapi/).
 
