@@ -72,8 +72,8 @@ public class ELIndividualContext extends IndividualContext {
 	/**
 	 * Asserts that the given individual is an instance of the complement of the given type.
 	 * @param type the given type
-	 * @param ind the given individual about which the assertion will be made
-	 * @return <code>true</code> if the assertion is successfull
+	 * @param indObj the given individual about which the assertion will be made
+	 * @return <code>true</code> if the assertion is successful
 	 */
 	@Override
 	public boolean addNegatedAttributeToObject(OWLClass type,IndividualObject indObj) {
