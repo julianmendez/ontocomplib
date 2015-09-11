@@ -12,7 +12,7 @@ jdk:
   - oraclejdk8
 
 install:
-  - mvn clean install
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=false -B -V
 
 after_success:
   - cd ontocomplib ; mvn clean cobertura:cobertura coveralls:report
