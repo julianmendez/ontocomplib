@@ -830,12 +830,12 @@ public class IndividualContext extends PartialContext<OWLClass,OWLNamedIndividua
 		return retCode;
 	}
 	
+	private DLExpert dlExpert;
+	
 	/**
 	 * Sets the expert for this context to the given expert
 	 * @param e the given expert
 	 */
-	private DLExpert dlExpert;
-	
 	public void setExpert(DLExpert e) {
 	    logger.debug("Setting the expert " + e);
 		dlExpert = e;
