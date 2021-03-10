@@ -1,10 +1,5 @@
-
-#
-# Configuration file for Travis CI
-# https://travis-ci.org/
-#
-
 ---
+# Configuration file for Travis CI [[https://travis-ci.com]]
 
 language: java
 
@@ -22,8 +17,5 @@ jdk:
 
 install:
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=false -B -V
-
-after_success:
-  - cd ontocomplib ; mvn clean cobertura:cobertura coveralls:report
 
 
